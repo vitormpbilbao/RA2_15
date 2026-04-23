@@ -696,18 +696,32 @@ def lerTokens(arquivo: str) -> list:
 
 
 if __name__ == "__main__":
-    nome_in = "teste_1.txt"
-    nome_out = "token.txt"
-    linhas = ler_teste(nome_in)
+    # Testa operadores relacionais novos da Fase 2
+    print("++ Operadores Relacionais ++")
+    for linha in ["( A B > )", "( A B >= )", "( A B < )", "( A B <= )", "( A B == )", "( A B != )"]:
+        tokens = [t.to_dict() for t in parseExpressao(linha)]
+        print(f"  {linha} → {tokens}")
 
-    with open(nome_out, "w", encoding="utf-8") as arquivo_saida:
-        for i, linha in enumerate(linhas, 1):
-            print(f"Linha {i}: {linha}")
-            try:
-                tokens = parseExpressao(linha)
-                dict_out = [token.to_dict() for token in tokens]
-                # Escreve dict_out como uma linha no arquivo
-                arquivo_saida.write(str(dict_out) + "\n")
-            except Exception as e:
-                print(f"ERRO: {e}")
-                # arquivo_saida.write(f"ERRO: {e}\n")
+    # Testa keywords de controle
+    print("\n++ Keywords de Controle ++")
+    for linha in ["(START)", "(END)", "( A B > ) IF", "( A B > ) IFELSE", "( A B < ) WHILE"]:
+        tokens = [t.to_dict() for t in parseExpressao(linha)]
+        print(f"  {linha} → {tokens}")
+
+    # Testa erros léxicos
+    print("\n++ Erros Léxicos ++")
+    for linha in ["( A @ B + )", "( A = B )", "( A ! B )", "( 3..14 + )"]:
+        try:
+            parseExpressao(linha)
+            print(f"  [FALHOU] '{linha}' deveria gerar erro")
+        except ValueError as e:
+            print(f"  [OK] '{linha}' → {e}")
+
+    # Testa lerTokens com os arquivos
+    print("\n++lerTokens com arquivos ++")
+    for nome in ["teste_fase2_1.txt", "teste_fase2_2.txt", "teste_fase2_3.txt"]:
+        try:
+            lista = lerTokens(nome)
+            print(f"  {nome}: {len(lista)} instruções tokenizadas")
+        except FileNotFoundError:
+            print(f"  {nome}: arquivo não encontrado")
