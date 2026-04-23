@@ -7,7 +7,7 @@
 # Aluno 4: Interface do Usuário e Integração Final
 
 import sys
-from analisador_lexico import parseExpressao, ler_teste
+from analisador_lexico import parseExpressao, ler_teste, lerTokens    #Trabalho 2 
 from gerarAssembly import gerarAssembly
 from geren_memo import executarExpressao, validarToken, memoria, historico
 
@@ -84,9 +84,9 @@ def main():
     print(f"Arquivo: {nome_arquivo}\n")
 
     try:
-        # Lê arquivo (Aluno 1)
-        linhas = ler_teste(nome_arquivo)
-        print(f"{len(linhas)} linhas lidas\n")
+        # Lê arquivo (Aluno 3)  Trabalho 2
+        lista_tokens = lerTokens(nome_arquivo)
+        print(f"{len(lista_tokens)} instruções tokenizadas\n")
 
         resultados = []
         todos_tokens_dicts = []
