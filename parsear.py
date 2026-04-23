@@ -129,6 +129,18 @@ class ParserLL1:
     def _add_derivacao(self, derivacao: str):
         self.derivacoes.append(derivacao)
 
+    def _serializar_arvore(self, no: NoArvore | None) -> dict | None:
+        # Basicamente um to dict
+        if not no:
+            return None
+
+        return {
+            "rotulo": no.rotulo,
+            "tipo": no.tipo,
+            "valor": no.valor,
+            "filhos": [self._serializar_arvore(filho) for filho in no.filhos],
+        }
+
 
 if __name__ == "__main__":
     print("Estruturas de dados importadas com sucesso!")
@@ -140,3 +152,10 @@ if __name__ == "__main__":
         1, 5, "NUMERO", "VARIAVEL", "Esperado NUMERO, encontrado VARIAVEL"
     )
     print(f"   Erro: {erro}")
+
+    print("\nClasse ParserLL1 inicializada com sucesso!")
+    parser = ParserLL1()
+    print(f"   Não-terminais: {list(parser.gramatica.keys())}")
+    print(
+        f"   Total de regras: {sum(len(regras) for regras in parser.gramatica.values())}"
+    )
