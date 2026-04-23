@@ -1,39 +1,35 @@
 def construirGramatica():
     return {
         "Programa": [
-            ["PARENTESIS_ESQ", "START", "PARENTESIS_DIR", "ListaCmd", "PARENTESIS_ESQ", "END", "PARENTESIS_DIR"]
+            ["PARENTESIS_ESQ", "START", "PARENTESIS_DIR", "ListaOuFim"]
         ],
-        
-        "ListaCmd": [
-            ["Comando", "ListaCmd"],
-            ["EPSILON"]
+        "ListaOuFim": [
+            ["PARENTESIS_ESQ", "ConteudoOuFim"]
         ],
-        
+        "ConteudoOuFim": [
+            ["END", "PARENTESIS_DIR"],
+            ["Conteudo", "PARENTESIS_DIR", "ListaOuFim"]
+        ],
         "Comando": [
             ["PARENTESIS_ESQ", "Conteudo", "PARENTESIS_DIR"]
         ],
-    
         "Conteudo": [
             ["Elemento", "RestoConteudo"]
         ],
-        
         "RestoConteudo": [
             ["Elemento", "Cauda"],
-            ["RES"],         
+            ["RES"],
             ["EPSILON"]
         ],
-        
         "Cauda": [
             ["OPERADOR"], ["MEM"], ["IF"], ["WHILE"]
         ],
-        
         "Elemento": [
             ["NUMERO"], 
             ["VARIAVEL"], 
             ["Comando"]
         ]
     }
-
 def calcularFirst(gramatica):
     #cria dict
     firsts = {nt: set() for nt in gramatica}
