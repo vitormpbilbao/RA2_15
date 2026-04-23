@@ -6,6 +6,8 @@
 # Grupo: RA1 15
 from dataclasses import dataclass
 
+COMANDOS = {"MEM", "RES"}
+KEYWORDS = {"START", "END", "IF", "IFELSE", "WHILE"}
 
 @dataclass
 class Token:
@@ -18,7 +20,7 @@ class Token:
     ----------
     tipo : str
         Tipo do token. Valores possíveis: 'NUMERO', 'OPERADOR', 'PARENTESIS',
-        'COMANDO', 'VARIAVEL'
+        'COMANDO', 'VARIAVEL', 'KEYWORD'
     valor : str
         Valor literal do token. Exemplos: '3', '+', '(', 'MEM', 'A'
 
@@ -33,7 +35,7 @@ class Token:
     {'tipo': 'NUMERO', 'valor': '42'}
     """
 
-    tipo: str  # "NUMERO", "OPERADOR", "PARENTESIS", "COMANDO", "VARIAVEL"
+    tipo: str  # "NUMERO", "OPERADOR", "PARENTESIS", "COMANDO", "VARIAVEL", "KEYWORD"
     valor: str  # O valor real do token. Exemplo, "3", "+", "(", "MEM"
 
     def to_dict(self) -> dict:
@@ -126,7 +128,21 @@ def estado_inicial(caractere: str, contexto: dict) -> str:
     elif caractere == "/":
         contexto["buffer"] = "/"
         return "valida_divisao"
-
+    
+    #FASE 2 ADAPTAÇÃO PARA KEYWORDS ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    elif caractere == ">":
+        contexto["buffer"] = ">"
+        return "valida_maior"
+    elif caractere == "<":
+        contexto["buffer"] = "<"
+        return "valida_menor"
+    elif caractere == "=":
+        contexto["buffer"] = "="
+        return "valida_igual"
+    elif caractere == "!":
+        contexto["buffer"] = "!"
+        return "valida_diferente"
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # entrada invalida
     else:
         msg = f"Caractere inválido: '{caractere}'"
@@ -196,6 +212,12 @@ def estado_numero(caractere: str, contexto: dict) -> str:
         contexto["tokens"].append(Token("NUMERO", contexto["buffer"]))
         contexto["buffer"] = "/"
         return "valida_divisao"
+    
+    #Fase 2++++++++++++++++++++++++++++++++++++++++++++++++
+    elif caractere in "><!=":
+        contexto["tokens"].append(Token("NUMERO", contexto["buffer"]))
+        contexto["buffer"] = ""
+        return estado_inicial(caractere, contexto)
 
     # inválido
     else:
