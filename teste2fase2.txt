@@ -1,0 +1,21 @@
+(START)
+( 100 VALOR MEM )
+( 3.14 PI MEM )
+( VALOR PI * )
+( VALOR PI / )
+( VALOR 7 % )
+( VALOR 2 ^ )
+( 1 RES )
+( ( VALOR 50 > ) ( ( 1 GRANDE MEM ) ) ( ( 0 GRANDE MEM ) ) IFELSE )
+( 2.718 E MEM )
+( E PI + )
+( ( E 2 != ) ( ( ( E 1 - ) E MEM ) ) WHILE )
+( 0 ACUM MEM )
+( ( ACUM 100 < ) ( ( ( ACUM 10 + ) ACUM MEM ) ) WHILE )
+# ERRO LÉXICO intencional: caractere '@' inválido
+( 5 @ 3 + )
+# ERRO LÉXICO intencional: '=' isolado
+( A = B )
+# ERRO LÉXICO intencional: número com dois pontos
+( 3..14 2 + )
+(END)

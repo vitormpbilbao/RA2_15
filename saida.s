@@ -2,17 +2,25 @@
     .align 3
     memoria_res: .space 800
     const_um: .double 1.0
-    num_0: .double 10
-    var_CONTADOR: .double 0.0
+    num_0: .double 100
+    var_VALOR: .double 0.0
     num_1: .double 3.14
     var_PI: .double 0.0
-    num_2: .double 3
+    num_2: .double 7
     num_3: .double 2
-    num_4: .double 2
-    num_5: .double 5.0
-    num_6: .double 2.0
-    num_7: .double 1
-    num_8: .double 2.5
+    num_4: .double 1
+    num_5: .double 50
+    num_6: .double 1
+    var_GRANDE: .double 0.0
+    num_7: .double 0
+    num_8: .double 2.718
+    var_E: .double 0.0
+    num_9: .double 2
+    num_10: .double 1
+    num_11: .double 0
+    var_ACUM: .double 0.0
+    num_12: .double 100
+    num_13: .double 10
 
 .text
 .global _start
@@ -20,12 +28,12 @@ _start:
     LDR r0, =num_0
     VLDR.F64 d0, [r0]
     VPUSH {d0}
-    LDR r0, =var_CONTADOR
+    LDR r0, =var_VALOR
     VLDR.F64 d0, [r0]
     VPUSH {d0}
     VPOP {d1}
     VPOP {d0}
-    LDR r0, =var_CONTADOR
+    LDR r0, =var_VALOR
     VSTR.F64 d0, [r0]
     LDR r0, =num_1
     VLDR.F64 d0, [r0]
@@ -37,27 +45,7 @@ _start:
     VPOP {d0}
     LDR r0, =var_PI
     VSTR.F64 d0, [r0]
-    LDR r0, =var_CONTADOR
-    VLDR.F64 d0, [r0]
-    VPUSH {d0}
-    LDR r0, =var_PI
-    VLDR.F64 d0, [r0]
-    VPUSH {d0}
-    VPOP {d1}
-    VPOP {d2}
-    VADD.F64 d0, d2, d1
-    VPUSH {d0}
-    LDR r0, =var_CONTADOR
-    VLDR.F64 d0, [r0]
-    VPUSH {d0}
-    LDR r0, =var_PI
-    VLDR.F64 d0, [r0]
-    VPUSH {d0}
-    VPOP {d1}
-    VPOP {d2}
-    VSUB.F64 d0, d2, d1
-    VPUSH {d0}
-    LDR r0, =var_CONTADOR
+    LDR r0, =var_VALOR
     VLDR.F64 d0, [r0]
     VPUSH {d0}
     LDR r0, =var_PI
@@ -67,7 +55,7 @@ _start:
     VPOP {d2}
     VMUL.F64 d0, d2, d1
     VPUSH {d0}
-    LDR r0, =var_CONTADOR
+    LDR r0, =var_VALOR
     VLDR.F64 d0, [r0]
     VPUSH {d0}
     LDR r0, =var_PI
@@ -77,7 +65,7 @@ _start:
     VPOP {d2}
     VDIV.F64 d0, d2, d1
     VPUSH {d0}
-    LDR r0, =var_CONTADOR
+    LDR r0, =var_VALOR
     VLDR.F64 d0, [r0]
     VPUSH {d0}
     LDR r0, =num_2
@@ -94,7 +82,7 @@ _start:
     VMOV s0, r3
     VCVT.F64.S32 d0, s0
     VPUSH {d0}
-    LDR r0, =var_CONTADOR
+    LDR r0, =var_VALOR
     VLDR.F64 d0, [r0]
     VPUSH {d0}
     LDR r0, =num_3
@@ -125,38 +113,106 @@ fim_pot_0:
     ADD r0, r0, r1
     VLDR.F64 d0, [r0]
     VPUSH {d0}
+    LDR r0, =var_VALOR
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
     LDR r0, =num_5
     VLDR.F64 d0, [r0]
     VPUSH {d0}
     LDR r0, =num_6
     VLDR.F64 d0, [r0]
     VPUSH {d0}
-    VPOP {d1}
-    VPOP {d2}
-    VCVT.S32.F64 s1, d1
-    VCVT.S32.F64 s2, d2
-    VMOV r1, s1
-    VMOV r0, s2
-    SDIV r2, r0, r1
-    VMOV s0, r2
-    VCVT.F64.S32 d0, s0
+    LDR r0, =var_GRANDE
+    VLDR.F64 d0, [r0]
     VPUSH {d0}
+    VPOP {d1}
+    VPOP {d0}
+    LDR r0, =var_GRANDE
+    VSTR.F64 d0, [r0]
     LDR r0, =num_7
     VLDR.F64 d0, [r0]
     VPUSH {d0}
-    VPOP {d1}
-    VCVT.S32.F64 s1, d1
-    VMOV r1, s1
-    LSL r1, r1, #3
-    LDR r0, =memoria_res
-    ADD r0, r0, r1
+    LDR r0, =var_GRANDE
     VLDR.F64 d0, [r0]
     VPUSH {d0}
+    VPOP {d1}
+    VPOP {d0}
+    LDR r0, =var_GRANDE
+    VSTR.F64 d0, [r0]
     LDR r0, =num_8
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =var_E
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    VPOP {d1}
+    VPOP {d0}
+    LDR r0, =var_E
+    VSTR.F64 d0, [r0]
+    LDR r0, =var_E
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =var_PI
     VLDR.F64 d0, [r0]
     VPUSH {d0}
     VPOP {d1}
     VPOP {d2}
     VADD.F64 d0, d2, d1
     VPUSH {d0}
+    LDR r0, =var_E
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =num_9
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =var_E
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =num_10
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    VPOP {d1}
+    VPOP {d2}
+    VSUB.F64 d0, d2, d1
+    VPUSH {d0}
+    LDR r0, =var_E
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    VPOP {d1}
+    VPOP {d0}
+    LDR r0, =var_E
+    VSTR.F64 d0, [r0]
+    LDR r0, =num_11
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =var_ACUM
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    VPOP {d1}
+    VPOP {d0}
+    LDR r0, =var_ACUM
+    VSTR.F64 d0, [r0]
+    LDR r0, =var_ACUM
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =num_12
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =var_ACUM
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    LDR r0, =num_13
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    VPOP {d1}
+    VPOP {d2}
+    VADD.F64 d0, d2, d1
+    VPUSH {d0}
+    LDR r0, =var_ACUM
+    VLDR.F64 d0, [r0]
+    VPUSH {d0}
+    VPOP {d1}
+    VPOP {d0}
+    LDR r0, =var_ACUM
+    VSTR.F64 d0, [r0]
     BX lr
