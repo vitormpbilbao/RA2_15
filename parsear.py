@@ -115,6 +115,20 @@ class ParserLL1:
             self.indice_token += 1
         return token
 
+    def _add_erro(self, esperado: str, encontrado: str):
+        erro = ErroSintatico(
+            numero_comando=self.numero_comando,
+            indice_token=self.indice_token,
+            esperado=esperado,
+            encontrado=encontrado,
+            mensagem=f"Cmd {self.numero_comando}[{self.indice_token}]: "
+            f"Esperado '{esperado}', encontrado '{encontrado}'",
+        )
+        self.erros.append(erro)
+
+    def _add_derivacao(self, derivacao: str):
+        self.derivacoes.append(derivacao)
+
 
 if __name__ == "__main__":
     print("Estruturas de dados importadas com sucesso!")
