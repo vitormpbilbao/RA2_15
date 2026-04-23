@@ -63,6 +63,47 @@ class ParserLL1:
         self.erros = []  # Lista de erros encontrados
         self.numero_comando = 0  # Qual comando está sendo processado
 
+    def get_terminal(self, token: dict) -> str:
+        if not token:
+            return "$"
+
+        tipo = token.get("tipo", "")
+        valor = token.get("valor", "")
+
+        if tipo == "PARENTESIS":
+            return "PARENTESIS_ESQ" if valor == "(" else "PARENTESIS_DIR"
+        elif tipo == "NUMERO":
+            return "NUMERO"
+        elif tipo == "VARIAVEL":
+            return "VARIAVEL"
+        elif tipo == "OPERADOR":
+            return "OPERADOR"
+        elif tipo == "COMANDO":
+            # Retorna o valor específico: MEM, RES, IF, WHILE, IFELSE
+            return valor
+        else:
+            return "DESCONHECIDO"
+
+    def _is_terminal(self, simbolo: str) -> bool:
+        # TODO: Verificar se isso aqui vai mudar deopis que a gramatica e a tokenizacao estiverem implementadas
+        terminais = {
+            "PARENTESIS_ESQ",
+            "PARENTESIS_DIR",
+            "NUMERO",
+            "VARIAVEL",
+            "OPERADOR",
+            "START",
+            "END",
+            "MEM",
+            "RES",
+            "IF",
+            "IFELSE",
+            "WHILE",
+            "FOR",
+            "$",
+        }
+        return simbolo in terminais
+
 
 if __name__ == "__main__":
     print("Estruturas de dados importadas com sucesso!")
