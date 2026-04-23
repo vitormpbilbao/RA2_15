@@ -506,6 +506,7 @@ def _criar_token_comando_ou_variavel(contexto: dict):
     if not contexto["buffer"]:
         return
 
+#Fase 2: adaptação para reconhecer keywords ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     palavra = contexto["buffer"].upper()
 
     if palavra in COMANDOS:
@@ -614,6 +615,84 @@ def ler_teste(nome_arquivo: str) -> list:
     with open(nome_arquivo, "r", encoding="utf-8") as f:
         linhas = [linha.strip() for linha in f.readlines() if linha.strip()]
     return linhas
+
+
+
+
+
+#Fase  2 adaptação para interface com o parser (Aluno 3) ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def lerTokens(arquivo: str) -> list:
+    """Lê o arquivo fonte e retorna lista de listas de tokens.
+
+    Abre o arquivo .txt linha a linha, descarta linhas vazias e comentários
+    (linhas começando com '#'), e tokeniza cada instrução usando o DFA
+    estendido. Cada sublista corresponde a uma instrução do programa.
+
+    Esta é a função de interface do Aluno 3 com o Aluno 2 (parsear).
+
+    Parameters
+    ----------
+    arquivo : str
+        Caminho para o arquivo de código-fonte (.txt)
+
+    Returns
+    -------
+    list
+        Lista de listas de dicionários:
+        [
+          [{'tipo': 'KEYWORD',    'valor': 'START'}, ...],
+          [{'tipo': 'PARENTESIS', 'valor': '('}, ...],
+          ...
+          [{'tipo': 'KEYWORD',    'valor': 'END'}, ...],
+        ]
+
+    Raises
+    ------
+    ValueError
+        Se o arquivo não tiver extensão .txt
+    FileNotFoundError
+        Se o arquivo não existir
+
+    Examples
+    --------
+    >>> tokens = lerTokens('teste_fase2_1.txt')
+    >>> tokens[0]
+    [{'tipo': 'PARENTESIS', 'valor': '('}, {'tipo': 'KEYWORD', 'valor': 'START'}, ...]
+    """
+    if not arquivo.endswith(".txt"):
+        raise ValueError(
+            f"Arquivo inválido: '{arquivo}'. O arquivo deve ter extensão .txt"
+        )
+
+    try:
+        with open(arquivo, "r", encoding="utf-8") as f:
+            linhas_brutas = f.readlines()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Arquivo não encontrado: '{arquivo}'")
+
+    resultado = []
+    erros = []
+
+    for numero_linha, linha_bruta in enumerate(linhas_brutas, start=1):
+        linha = linha_bruta.strip()
+
+        # ignora linhas vazias e comentários
+        if not linha or linha.startswith("#"):
+            continue
+
+        try:
+            tokens_obj = parseExpressao(linha)
+            tokens_dicts = [t.to_dict() for t in tokens_obj]
+            if tokens_dicts:
+                resultado.append(tokens_dicts)
+        except ValueError as erro:
+            erros.append(str(erro))
+            print(f"  [ERRO LÉXICO] Linha {numero_linha}: {erro}")
+
+    if erros:
+        print(f"\n  Total de erros léxicos: {len(erros)}")
+
+    return resultado
 
 
 if __name__ == "__main__":
