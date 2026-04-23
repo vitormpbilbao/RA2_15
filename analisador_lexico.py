@@ -213,7 +213,7 @@ def estado_numero(caractere: str, contexto: dict) -> str:
         contexto["buffer"] = "/"
         return "valida_divisao"
     
-    #Fase 2++++++++++++++++++++++++++++++++++++++++++++++++
+    #Fase 2++++++++++++++++++++++++++++++++++++++++++++++++ operadores relacionais, ex:terminadores de npumero
     elif caractere in "><!=":
         contexto["tokens"].append(Token("NUMERO", contexto["buffer"]))
         contexto["buffer"] = ""
@@ -295,7 +295,7 @@ def estado_valida_divisao(caractere: str, contexto: dict) -> str:
         contexto["tokens"].append(Token("OPERADOR", "//"))
         contexto["buffer"] = ""
         return "inicial"
-
+    
     else:
         contexto["tokens"].append(Token("OPERADOR", "/"))
         contexto["buffer"] = ""
@@ -349,7 +349,11 @@ def estado_letra(caractere: str, contexto: dict) -> str:
         _criar_token_comando_ou_variavel(contexto)
         contexto["buffer"] = ""
         return "valida_menos"
-
+    # Fase 2:operadores relacinais como terminadores de palavra+++++++++++++++++++++++++++++++
+    elif caractere in "><!=":
+        _criar_token_comando_ou_variavel(contexto)
+        return estado_inicial(caractere, contexto)
+    
     else:
         msg = f"Caractere inválido em comando: '{contexto['buffer']}{caractere}'"
         raise ValueError(msg)
