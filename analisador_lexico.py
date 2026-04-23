@@ -417,7 +417,70 @@ def estado_valida_menor(caractere: str, contexto: dict) -> str:
         contexto["buffer"] = ""
         return estado_inicial(caractere, contexto)
 
+def estado_valida_igual(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '=': deve formar '=='.
 
+    A linguagem não tem atribuição com '=' — isso é feito via MEM.
+    Portanto '=' isolado é sempre erro léxico.
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o primeiro '='
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+
+    Raises
+    ------
+    ValueError
+        Se '=' não for seguido de outro '='
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", "=="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        raise ValueError(
+            "Erro léxico: '=' isolado não é válido. Use '==' para comparação."
+        )
+
+
+def estado_valida_diferente(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '!': deve formar '!='.
+
+    '!' sozinho não tem uso na linguagem.
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o '!'
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+
+    Raises
+    ------
+    ValueError
+        Se '!' não for seguido de '='
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", "!="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        raise ValueError(
+            f"Erro léxico: '!' deve ser seguido de '=' para '!='. "
+            f"Encontrado: '!{caractere}'"
+        )
 
 
 
