@@ -40,10 +40,10 @@ def is_numero(token):
 
 # definindo os operadores válidos
 operadores = {"+", "-", "*", "/", "//", "%", "^"}
-memoria = {}
+memoria = {}        
 historico = []
 
-
+#####ERRO com o ALUNO 2, o geren memo nao sabe tratar token do tipo KEYWORD
 def executarExpressao(tokens):  # , memoria, historico):
     """
     Monta uma árvore de operações a partir dos tokens do Aluno 1

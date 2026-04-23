@@ -554,6 +554,10 @@ def parseExpressao(linha: str) -> list:
         "letra": estado_letra,
         "valida_menos": estado_valida_menos,
         "valida_divisao": estado_valida_divisao,
+        "valida_maior": estado_valida_maior,          # fase 2: operador relacional '>'
+        "valida_menor": estado_valida_menor,          # fase 2: operador relacional '<'
+        "valida_igual": estado_valida_igual,          # Fase 2: operador relacional '=='
+        "valida_diferente": estado_valida_diferente,  # ase 2: operador relacional '!='
     }
 
     # Processa cada caractere da linha
