@@ -1,0 +1,17 @@
+
+
+(START)
+( 1 I MEM )
+( 0 SOMA MEM )
+( 2.5 FATOR MEM )
+( ( I 5 <= ) ( ( ( SOMA I + ) SOMA MEM ) ( ( I 1 + ) I MEM ) ) WHILE )
+( SOMA )
+( SOMA FATOR * )
+( SOMA 3 // )
+( SOMA 4 % )
+( SOMA 2 ^ )
+( 1 RES )
+( ( SOMA 10 >= ) ( ( 1 GRANDE MEM ) ) ( ( 0 GRANDE MEM ) ) IFELSE )
+( GRANDE )
+( 7.0 3.0 - )
+(END)
