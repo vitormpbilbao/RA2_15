@@ -99,4 +99,50 @@ def calcularFollow(gramatica, firsts):
     return follows
 
 def construirTabelaLL1(gramatica, firsts, follows):
-    pass
+    tabela = {nt: {} for nt in gramatica}
+    
+    terminais = {
+        "PARENTESIS_ESQ", "PARENTESIS_DIR", "START", "END", 
+        "RES", "OPERADOR", "MEM", "IF", "WHILE", "NUMERO", "VARIAVEL"
+    }
+    for nt, regras in gramatica.items():
+        for regra in regras:
+            first_da_regra = set()
+            for simbolo in regra:
+                if simbolo in terminais or simbolo == "EPSILON":
+                    first_da_regra.add(simbolo)
+                    break
+                else:
+                    firsts_do_vizinho = firsts[simbolo]
+                    first_da_regra.update(firsts_do_vizinho - {"EPSILON"})
+                    if "EPSILON" not in firsts_do_vizinho:
+                        break
+            else:
+                first_da_regra.add("EPSILON")
+            for terminal in first_da_regra:
+                if terminal != "EPSILON":
+                    if terminal in tabela[nt]:
+                        print(f"ERRO DE CONFLITO LL(1): Gramática ambígua em {nt} com token {terminal}")
+                    tabela[nt][terminal] = regra
+            if "EPSILON" in first_da_regra:
+                for terminal in follows[nt]:
+                    if terminal in tabela[nt]:
+                        print(f"ERRO DE CONFLITO LL(1) (FIRST/FOLLOW): em {nt} com token {terminal}")
+                    tabela[nt][terminal] = regra
+
+    return tabela
+
+# ==========================================
+#              BLOCO DE TESTE
+# ==========================================
+if __name__ == "__main__":
+    gram = construirGramatica()
+    firsts = calcularFirst(gram)
+    follows = calcularFollow(gram, firsts)
+    tabela = construirTabelaLL1(gram, firsts, follows)
+    
+    print("=== TABELA LL(1) GERADA COM SUCESSO ===")
+    for nt, mapeamento in tabela.items():
+        print(f"\n[{nt}]:")
+        for terminal, regra in mapeamento.items():
+            print(f"  Se ler '{terminal}' -> Usar regra: {regra}")
