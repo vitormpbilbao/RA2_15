@@ -3,7 +3,7 @@
 # Vinicius Cordeiro Vogt | vinivaldox | https://github.com/vinivaldox
 # Vitor Matias Percegona Bilbao | TODO: inserir usuario/apelido do github aqui
 
-# Grupo: RA1 15
+# Grupo: RA2 15
 from dataclasses import dataclass
 import random
 
