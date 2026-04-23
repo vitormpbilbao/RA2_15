@@ -1,36 +1,38 @@
 def construirGramatica():
-    gramatica = {
+    return {
         "Programa": [
             ["PARENTESIS_ESQ", "START", "PARENTESIS_DIR", "ListaCmd", "PARENTESIS_ESQ", "END", "PARENTESIS_DIR"]
         ],
-
+        
         "ListaCmd": [
             ["Comando", "ListaCmd"],
             ["EPSILON"]
         ],
-
+        
         "Comando": [
-            ["PARENTESIS_ESQ", "ConteudoComando", "PARENTESIS_DIR"]
+            ["PARENTESIS_ESQ", "Conteudo", "PARENTESIS_DIR"]
+        ],
+    
+        "Conteudo": [
+            ["Elemento", "RestoConteudo"]
         ],
         
-        "ConteudoComando": [
-            ["Elemento", "Elemento", "Operador"],
-            ["Elemento", "MEM"],
-            ["Elemento", "RES"]
+        "RestoConteudo": [
+            ["Elemento", "Cauda"],
+            ["RES"],         
+            ["EPSILON"]
+        ],
+        
+        "Cauda": [
+            ["OPERADOR"], ["MEM"], ["IF"], ["WHILE"]
         ],
         
         "Elemento": [
-            ["NUMERO"],
-            ["VARIAVEL"],
+            ["NUMERO"], 
+            ["VARIAVEL"], 
             ["Comando"]
-        ],
-
-        "Operador": [
-            ["+"], ["-"], ["*"], ["/"], ["//"], ["%"], ["^"]
         ]
     }
-    
-    return gramatica
 
 def calcularFirst(gramatica):
     pass
