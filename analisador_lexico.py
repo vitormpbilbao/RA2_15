@@ -359,6 +359,71 @@ def estado_letra(caractere: str, contexto: dict) -> str:
         raise ValueError(msg)
 
 
+#Fase 2: novos estados
+
+def estado_valida_maior(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '>': pode ser '>' ou '>='.
+
+    '>'  → maior que
+    '>=' → maior ou igual
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o '>'
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", ">="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        # '>' simples: emite e reprocessa o caractere atual
+        contexto["tokens"].append(Token("OPERADOR", ">"))
+        contexto["buffer"] = ""
+        return estado_inicial(caractere, contexto)
+
+
+def estado_valida_menor(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '<': pode ser '<' ou '<='.
+
+    '<'  → menor que
+    '<=' → menor ou igual
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o '<'
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", "<="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        contexto["tokens"].append(Token("OPERADOR", "<"))
+        contexto["buffer"] = ""
+        return estado_inicial(caractere, contexto)
+
+
+
+
+
+
+
+
 def _criar_token_comando_ou_variavel(contexto: dict):
     """Emite token de COMANDO ou VARIÁVEL conforme o buffer.
 
