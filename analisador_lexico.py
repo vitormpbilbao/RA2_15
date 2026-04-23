@@ -506,12 +506,14 @@ def _criar_token_comando_ou_variavel(contexto: dict):
     if not contexto["buffer"]:
         return
 
-    comandos = {"MEM", "RES"}
+    palavra = contexto["buffer"].upper()
 
-    if contexto["buffer"].upper() in comandos:
-        contexto["tokens"].append(Token("COMANDO", contexto["buffer"]))
+    if palavra in COMANDOS:
+        contexto["tokens"].append(Token("COMANDO", palavra))
+    elif palavra in KEYWORDS:
+        contexto["tokens"].append(Token("KEYWORD", palavra))
     else:
-        contexto["tokens"].append(Token("VARIAVEL", contexto["buffer"]))
+        contexto["tokens"].append(Token("VARIAVEL", palavra))
 
     contexto["buffer"] = ""
 
