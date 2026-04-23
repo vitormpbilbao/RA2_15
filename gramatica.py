@@ -3,6 +3,15 @@ def construirGramatica():
         "Programa": [
             ["PARENTESIS_ESQ", "START", "PARENTESIS_DIR", "ListaCmd", "PARENTESIS_ESQ", "END", "PARENTESIS_DIR"]
         ],
+        
+        "ListaCmd": [
+            ["Comando", "ListaCmd"],
+            ["EPSILON"]
+        ],
+
+        "Operador": [
+            ["+"], ["-"], ["*"], ["/"], ["//"], ["%"], ["^"]
+        ]
     }
     
     return gramatica
