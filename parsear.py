@@ -104,6 +104,17 @@ class ParserLL1:
         }
         return simbolo in terminais
 
+    def _next_token(self) -> dict | None:
+        if self.indice_token < len(self.tokens_atuais):
+            return self.tokens_atuais[self.indice_token]
+        return None
+
+    def _get_next_token(self) -> dict | None:
+        token = self._next_token()
+        if token:
+            self.indice_token += 1
+        return token
+
 
 if __name__ == "__main__":
     print("Estruturas de dados importadas com sucesso!")
