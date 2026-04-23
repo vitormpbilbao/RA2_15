@@ -43,6 +43,27 @@ class ErroSintatico:
         return f"ErroSintatico(cmd={self.numero_comando}[{self.indice_token}]: {self.mensagem})"
 
 
+class ParserLL1:
+    def __init__(self):
+        # Verifica import da gramatica ja que não existe um arquivo de gramatica.py nessa branch
+        try:
+            from gramatica import construirGramatica  # pyright: ignore[reportMissingImports]
+
+            self.gramatica = construirGramatica()
+        except ImportError:
+            print("Aviso: gramatica.py não encontrado. Usando gramática vazia.")
+            self.gramatica = {}
+
+        # Estado do parser
+        self.tokens_atuais = []  # Tokens sendo processados
+        self.indice_token = 0  # Posição atual no buffer
+        self.pilha_analise = []  # Pilha de símbolos para análise
+        self.derivacoes = []  # Histórico de derivações (debug)
+        self.arvore = None  # Árvore sintática resultante
+        self.erros = []  # Lista de erros encontrados
+        self.numero_comando = 0  # Qual comando está sendo processado
+
+
 if __name__ == "__main__":
     print("Estruturas de dados importadas com sucesso!")
 
