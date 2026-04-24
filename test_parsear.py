@@ -138,9 +138,9 @@ def teste_com_arquivo_teste():
             conteudo = f.read()
 
         linhas = [
-            l.strip()
-            for l in conteudo.split("\n")
-            if l.strip() and not l.strip().startswith("#")
+            i.strip()
+            for i in conteudo.split("\n")
+            if i.strip() and not i.strip().startswith("#")
         ]
 
         print(f"Arquivo teste1fase2.txt tem {len(linhas)} comandos")
