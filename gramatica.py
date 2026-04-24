@@ -1,3 +1,12 @@
+# Nome | apelido no Github | link do Github
+# Andrei de Carvalho Bley | andrei-bley | https://github.com/andrei-bley
+# Vinicius Cordeiro Vogt | vinivaldox | https://github.com/vinivaldox
+# Vitor Matias Percegona Bilbao | vitormpbilbao | https://github.com/vitormpbilbao
+
+# Grupo: RA2 15
+
+#Responsável: Vitor Bilbao
+
 def construirGramatica():
     return {
         "Programa": [
