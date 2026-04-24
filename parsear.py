@@ -29,6 +29,15 @@ class NoArvore:
         else:
             return f"NoArvore({self.rotulo}, filhos={len(self.filhos)})"
 
+    def serializar(self):
+        """Converte nó para dicionário (JSON-compatível)."""
+        return {
+            "rotulo": self.rotulo,
+            "tipo": self.tipo,
+            "valor": self.valor,
+            "filhos": [filho.serializar() for filho in self.filhos],
+        }
+
 
 @dataclass
 class ErroSintatico:
