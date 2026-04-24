@@ -27,22 +27,29 @@ def main():
         
         # O Parser espera uma lista plana, então nós "achatamos" a lista aqui
         tokens_planificados = [token for linha in tokens_brutos for token in linha]
-        print(f"      OK! {len(tokens_planificados)} tokens lidos.\n")
-        
-        #TODO
-        
+        print(f"OK! {len(tokens_planificados)} tokens lidos.\n")
         # ==========================================
         # PASSO 2: A PLANTA DA LINGUAGEM
         # ==========================================
-
-        #TODO
+        print("[2/5] Carregando a Gramática LL(1)...")
+        gramatica = construirGramatica()
+        print("OK! Gramática fatorada carregada.\n")
 
         # ==========================================
         # PASSO 3: ANALISADOR SINTÁTICO
         # ==========================================
+        print("[3/5] Executando Análise Sintática (Parsing)...")
+        resultado_parser = parsear(tokens_planificados, gramatica)
         
-        #TODO
-
+        # Mostra erros, se houver
+        if not resultado_parser["sucesso"]:
+            print("[ERRO] O código possui erros sintáticos:")
+            for r in resultado_parser["resultados"]:
+                if not r["sucesso"]:
+                    for erro in r["erros"]:
+                        print(f"      -> {erro['mensagem']}")
+            sys.exit(1)
+        print(f"OK! {resultado_parser['resumo']}.\n")
         # ==========================================
         # PASSO 4: ÁRVORE SINTÁTICA
         # ==========================================
@@ -50,7 +57,7 @@ def main():
         arvores = gerarArvore(resultado_parser)
         salvar_arvore_json(arvores, "arvore.json")
         
-        print("      OK! Árvore salva em 'arvore.json'. Primeira estrutura:")
+        print("OK! Árvore salva em 'arvore.json'. Primeira estrutura:")
         if arvores and arvores[0] is not None:
             print(imprimir_arvore(arvores[0], prefixo="        "))
         print("")
@@ -63,7 +70,7 @@ def main():
         
         with open("saida.s", "w", encoding="utf-8") as f:
             f.write(codigo_assembly)
-        print("      OK! Código salvo no arquivo 'saida.s'.\n")
+        print("OK! Código salvo no arquivo 'saida.s'.\n")
 
         print(f"{'=' * 50}")
         print("COMPILAÇÃO CONCLUÍDA")
