@@ -7,7 +7,7 @@
 # Aluno 4: Interface do Usuário e Integração Final
 
 import sys
-from analisador_lexico import parseExpressao, ler_teste
+from analisador_lexico import parseExpressao, ler_teste, lerTokens    
 from gerarAssembly import gerarAssembly
 from geren_memo import executarExpressao, validarToken, memoria, historico
 
@@ -85,30 +85,30 @@ def main():
 
     try:
         # Lê arquivo (Aluno 1)
-        linhas = ler_teste(nome_arquivo)
-        print(f"{len(linhas)} linhas lidas\n")
+        lista_tokens = lerTokens(nome_arquivo)
+        print(f"{len(lista_tokens)} instruções tokenizadas\n")
+
+#teste
+        print("Tokens da instrução 11:")
+        for t in lista_tokens[10]:
+            print(f"  {t}")
 
         resultados = []
         todos_tokens_dicts = []
-        tokens_por_linha = []  # Armazena tokens de cada linha
+        tokens_por_linha = []
         assembly_completo = ""
 
-        # Processa cada linha
-        for i, linha in enumerate(linhas, 1):
-            print(f"Linha {i}: {linha}")
+        # Processa cada instrução
+        for i, tokens_dicts in enumerate(lista_tokens, 1):
+            print(f"Instrução {i}: {len(tokens_dicts)} tokens")
 
             try:
-                # ===== ALUNO 1: Tokenização =====
-                tokens_obj = parseExpressao(linha)
-                # Converte Token objects para dicts
-                tokens_dicts = [t.to_dict() for t in tokens_obj]
-                tokens_por_linha.append(tokens_dicts)  # Armazena para salvar depois
+                # ===== ALUNO 3: tokens já prontos =====
+                tokens_por_linha.append(tokens_dicts)
                 todos_tokens_dicts.extend(tokens_dicts)
 
-                print(f"Tokenização OK ({len(tokens_obj)} tokens)")
-
                 # ===== ALUNO 2: Execução =====
-                arvore = executarExpressao(tokens_dicts)  # , memoria, historico)
+                arvore = executarExpressao(tokens_dicts)
                 valido, mensagem = validarToken(arvore, i, memoria, historico)
 
                 if valido:
