@@ -12,6 +12,7 @@ Descrição:
 """
 
 from dataclasses import dataclass, field
+from gramatica import calcularFirst, calcularFollow, construirTabelaLL1  # pyright: ignore[reportMissingImports] # noqa: F401
 
 
 @dataclass
@@ -53,24 +54,18 @@ class ErroSintatico:
 
 
 class ParserLL1:
-    def __init__(self):
-        # TODO, ESSE METODO É MEIO ESTRANHO, melhor parametrizar isso aqui
-        # Verifica import da gramatica ja que não existe um arquivo de gramatica.py nessa branch
-        try:
-            from gramatica import construirGramatica  # pyright: ignore[reportMissingImports]
-
-            self.gramatica = construirGramatica()
-        except ImportError:
-            print("Aviso: gramatica.py não encontrado. Usando gramática vazia.")
-            self.gramatica = {}
+    def __init__(self, gramatica):
+        """Inicializa parser com gramática dinâmica (não hardcoded)."""
+        self.gramatica = gramatica
+        self.firsts = calcularFirst(gramatica)
+        self.follows = calcularFollow(gramatica, self.firsts)
+        self.tabela_ll1 = construirTabelaLL1(gramatica, self.firsts, self.follows)
 
         # Estado do parser
-        self.tokens_atuais = []  # Tokens sendo processados
-        self.indice_token = 0  # Posição atual no buffer
-        self.pilha_analise = []  # Pilha de símbolos para análise
-        self.derivacoes = []  # Histórico de derivações (debug)
-        self.arvore = None  # Árvore sintática resultante
-        self.erros = []  # Lista de erros encontrados
+        self.tokens = []  # Tokens sendo processados
+        self.posicao = 0  # Posição atual no buffer
+        self.derivacoes = []  # Histórico de derivações
+        self.erros = []  # Erros encontrados
         self.numero_comando = 0  # Qual comando está sendo processado
 
     def get_terminal(self, token: dict) -> str:
@@ -110,6 +105,7 @@ class ParserLL1:
             "IFELSE",
             "WHILE",
             "FOR",
+            "EPSILON",
             "$",
         }
         return simbolo in terminais
@@ -136,38 +132,25 @@ class ParserLL1:
         )
         self.erros.append(erro)
 
+    def _combinarTerminal(self, esperado, contexto, no):
+        """Combina um terminal esperado com o próximo token."""
+        token = self._proximoToken()
+        terminal = self.obterTerminal(token)
+
+        if terminal == esperado:
+            self._avancarToken()
+            if token:
+                no_terminal = NoArvore(
+                    esperado, "terminal", valor=token.get("valor", "")
+                )
+                no.filhos.append(no_terminal)
+            return True
+        else:
+            self._adicionarErro(esperado, terminal, contexto)
+            return False
+
     def _add_derivacao(self, derivacao: str):
         self.derivacoes.append(derivacao)
-
-    def _serializar_arvore(self, no: NoArvore | None) -> dict | None:
-        # Basicamente um to dict
-        if not no:
-            return None
-
-        return {
-            "rotulo": no.rotulo,
-            "tipo": no.tipo,
-            "valor": no.valor,
-            "filhos": [self._serializar_arvore(filho) for filho in no.filhos],
-        }
-
-    def _selecionar_regra(self, terminal: str, regras: list) -> list | None:
-        """Seleciona a regra correta baseada em FIRST/FOLLOW."""
-        for regra in regras:
-            if not regra:
-                continue
-
-            primeiro_simbolo = regra[0]
-
-            if self._is_terminal(primeiro_simbolo):
-                if primeiro_simbolo == terminal:
-                    return regra
-            elif primeiro_simbolo == "EPSILON":
-                return regra
-            else:
-                return regra
-
-        return None
 
     def parsearComando(self, tokens: list[dict], num_comando: int) -> dict:
         # TODO MELHORAR A DOCSTR
