@@ -142,6 +142,9 @@ def estado_inicial(caractere: str, contexto: dict) -> str:
     elif caractere == "!":
         contexto["buffer"] = "!"
         return "valida_diferente"
+    elif caractere == "|":
+        contexto["tokens"].append(Token("OPERADOR", "|"))
+        return "inicial"
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # entrada invalida
     else:
@@ -197,7 +200,7 @@ def estado_numero(caractere: str, contexto: dict) -> str:
         return "inicial"
 
     # operador - termina número e processa operador
-    elif caractere in "+*/%^":
+    elif caractere in "+*/%^|":
         contexto["tokens"].append(Token("NUMERO", contexto["buffer"]))
         contexto["buffer"] = ""
         return "inicial"
@@ -334,7 +337,7 @@ def estado_letra(caractere: str, contexto: dict) -> str:
         _criar_token_comando_ou_variavel(contexto)
         return "inicial"
 
-    elif caractere in "()+-*/%^":
+    elif caractere in "()+-*/%^|":
         _criar_token_comando_ou_variavel(contexto)
         return estado_inicial(caractere, contexto)
 
