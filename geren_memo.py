@@ -1,7 +1,5 @@
 def lerTokensDict(nomeArquivo):
-    """
-    Lê o arquivo dos tokens gerado pelo Aluno 1 e retorna uma lista de linhas de dicionários de tolkens
-    """
+
     import ast  # converter a string em lista de dicionários
 
     linhas = []
@@ -40,10 +38,10 @@ def is_numero(token):
 
 # definindo os operadores válidos
 operadores = {"+", "-", "*", "/", "//", "%", "^"}
-memoria = {}
+memoria = {}        
 historico = []
 
-
+#####ERRO com o ALUNO 2, o geren memo nao sabe tratar token do tipo KEYWORD
 def executarExpressao(tokens):  # , memoria, historico):
     """
     Monta uma árvore de operações a partir dos tokens do Aluno 1

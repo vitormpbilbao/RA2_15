@@ -3,9 +3,12 @@
 # Vinicius Cordeiro Vogt | vinivaldox | https://github.com/vinivaldox
 # Vitor Matias Percegona Bilbao | vitormpbilbao | https://github.com/vitormpbilbao
 
-# Grupo: RA1 15
+
+# Grupo: RA2 15
 from dataclasses import dataclass
 
+COMANDOS = {"MEM", "RES"}
+KEYWORDS = {"START", "END", "IF", "WHILE"}
 
 @dataclass
 class Token:
@@ -18,7 +21,7 @@ class Token:
     ----------
     tipo : str
         Tipo do token. Valores possíveis: 'NUMERO', 'OPERADOR', 'PARENTESIS',
-        'COMANDO', 'VARIAVEL'
+        'COMANDO', 'VARIAVEL', 'KEYWORD'
     valor : str
         Valor literal do token. Exemplos: '3', '+', '(', 'MEM', 'A'
 
@@ -33,7 +36,7 @@ class Token:
     {'tipo': 'NUMERO', 'valor': '42'}
     """
 
-    tipo: str  # "NUMERO", "OPERADOR", "PARENTESIS", "COMANDO", "VARIAVEL"
+    tipo: str  # "NUMERO", "OPERADOR", "PARENTESIS", "COMANDO", "VARIAVEL", "KEYWORD"
     valor: str  # O valor real do token. Exemplo, "3", "+", "(", "MEM"
 
     def to_dict(self) -> dict:
@@ -126,7 +129,24 @@ def estado_inicial(caractere: str, contexto: dict) -> str:
     elif caractere == "/":
         contexto["buffer"] = "/"
         return "valida_divisao"
-
+    
+    #FASE 2 ADAPTAÇÃO PARA KEYWORDS ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    elif caractere == ">":
+        contexto["buffer"] = ">"
+        return "valida_maior"
+    elif caractere == "<":
+        contexto["buffer"] = "<"
+        return "valida_menor"
+    elif caractere == "=":
+        contexto["buffer"] = "="
+        return "valida_igual"
+    elif caractere == "!":
+        contexto["buffer"] = "!"
+        return "valida_diferente"
+    elif caractere == "|":
+        contexto["tokens"].append(Token("OPERADOR", "|"))
+        return "inicial"
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # entrada invalida
     else:
         msg = f"Caractere inválido: '{caractere}'"
@@ -181,7 +201,7 @@ def estado_numero(caractere: str, contexto: dict) -> str:
         return "inicial"
 
     # operador - termina número e processa operador
-    elif caractere in "+*/%^":
+    elif caractere in "+*/%^|":
         contexto["tokens"].append(Token("NUMERO", contexto["buffer"]))
         contexto["buffer"] = ""
         return "inicial"
@@ -196,6 +216,12 @@ def estado_numero(caractere: str, contexto: dict) -> str:
         contexto["tokens"].append(Token("NUMERO", contexto["buffer"]))
         contexto["buffer"] = "/"
         return "valida_divisao"
+    
+    #Fase 2++++++++++++++++++++++++++++++++++++++++++++++++ operadores relacionais, ex:terminadores de npumero
+    elif caractere in "><!=":
+        contexto["tokens"].append(Token("NUMERO", contexto["buffer"]))
+        contexto["buffer"] = ""
+        return estado_inicial(caractere, contexto)
 
     # inválido
     else:
@@ -273,7 +299,7 @@ def estado_valida_divisao(caractere: str, contexto: dict) -> str:
         contexto["tokens"].append(Token("OPERADOR", "//"))
         contexto["buffer"] = ""
         return "inicial"
-
+    
     else:
         contexto["tokens"].append(Token("OPERADOR", "/"))
         contexto["buffer"] = ""
@@ -312,7 +338,7 @@ def estado_letra(caractere: str, contexto: dict) -> str:
         _criar_token_comando_ou_variavel(contexto)
         return "inicial"
 
-    elif caractere in "()+-*/%^":
+    elif caractere in "()+-*/%^|":
         _criar_token_comando_ou_variavel(contexto)
         return estado_inicial(caractere, contexto)
 
@@ -327,10 +353,142 @@ def estado_letra(caractere: str, contexto: dict) -> str:
         _criar_token_comando_ou_variavel(contexto)
         contexto["buffer"] = ""
         return "valida_menos"
-
+    # Fase 2:operadores relacinais como terminadores de palavra+++++++++++++++++++++++++++++++
+    elif caractere in "><!=":
+        _criar_token_comando_ou_variavel(contexto)
+        return estado_inicial(caractere, contexto)
+    
     else:
         msg = f"Caractere inválido em comando: '{contexto['buffer']}{caractere}'"
         raise ValueError(msg)
+
+
+#Fase 2: novos estados
+
+def estado_valida_maior(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '>': pode ser '>' ou '>='.
+
+    '>'  → maior que
+    '>=' → maior ou igual
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o '>'
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", ">="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        # '>' simples: emite e reprocessa o caractere atual
+        contexto["tokens"].append(Token("OPERADOR", ">"))
+        contexto["buffer"] = ""
+        return estado_inicial(caractere, contexto)
+
+
+def estado_valida_menor(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '<': pode ser '<' ou '<='.
+
+    '<'  → menor que
+    '<=' → menor ou igual
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o '<'
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", "<="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        contexto["tokens"].append(Token("OPERADOR", "<"))
+        contexto["buffer"] = ""
+        return estado_inicial(caractere, contexto)
+
+def estado_valida_igual(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '=': deve formar '=='.
+
+    A linguagem não tem atribuição com '=' — isso é feito via MEM.
+    Portanto '=' isolado é sempre erro léxico.
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o primeiro '='
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+
+    Raises
+    ------
+    ValueError
+        Se '=' não for seguido de outro '='
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", "=="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        raise ValueError(
+            "Erro léxico: '=' isolado não é válido. Use '==' para comparação."
+        )
+
+
+def estado_valida_diferente(caractere: str, contexto: dict) -> str:
+    """Estado de validação do '!': deve formar '!='.
+
+    '!' sozinho não tem uso na linguagem.
+
+    Parameters
+    ----------
+    caractere : str
+        Caractere após o '!'
+    contexto : dict
+        Dicionário com 'buffer' e 'tokens'
+
+    Returns
+    -------
+    str
+        Próximo estado
+
+    Raises
+    ------
+    ValueError
+        Se '!' não for seguido de '='
+    """
+    if caractere == "=":
+        contexto["tokens"].append(Token("OPERADOR", "!="))
+        contexto["buffer"] = ""
+        return "inicial"
+    else:
+        raise ValueError(
+            f"Erro léxico: '!' deve ser seguido de '=' para '!='. "
+            f"Encontrado: '!{caractere}'"
+        )
+
+
+
+
 
 
 def _criar_token_comando_ou_variavel(contexto: dict):
@@ -352,12 +510,15 @@ def _criar_token_comando_ou_variavel(contexto: dict):
     if not contexto["buffer"]:
         return
 
-    comandos = {"MEM", "RES"}
+#Fase 2: adaptação para reconhecer keywords ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    palavra = contexto["buffer"].upper()
 
-    if contexto["buffer"].upper() in comandos:
-        contexto["tokens"].append(Token("COMANDO", contexto["buffer"]))
+    if palavra in COMANDOS:
+        contexto["tokens"].append(Token("COMANDO", palavra))
+    elif palavra in KEYWORDS:
+        contexto["tokens"].append(Token("KEYWORD", palavra))
     else:
-        contexto["tokens"].append(Token("VARIAVEL", contexto["buffer"]))
+        contexto["tokens"].append(Token("VARIAVEL", palavra))
 
     contexto["buffer"] = ""
 
@@ -397,6 +558,10 @@ def parseExpressao(linha: str) -> list:
         "letra": estado_letra,
         "valida_menos": estado_valida_menos,
         "valida_divisao": estado_valida_divisao,
+        "valida_maior": estado_valida_maior,          # fase 2: operador relacional '>'
+        "valida_menor": estado_valida_menor,          # fase 2: operador relacional '<'
+        "valida_igual": estado_valida_igual,          # Fase 2: operador relacional '=='
+        "valida_diferente": estado_valida_diferente,  # ase 2: operador relacional '!='
     }
 
     # Processa cada caractere da linha
@@ -460,19 +625,111 @@ def ler_teste(nome_arquivo: str) -> list:
     return linhas
 
 
-if __name__ == "__main__":
-    nome_in = "teste_1.txt"
-    nome_out = "token.txt"
-    linhas = ler_teste(nome_in)
 
-    with open(nome_out, "w", encoding="utf-8") as arquivo_saida:
-        for i, linha in enumerate(linhas, 1):
-            print(f"Linha {i}: {linha}")
-            try:
-                tokens = parseExpressao(linha)
-                dict_out = [token.to_dict() for token in tokens]
-                # Escreve dict_out como uma linha no arquivo
-                arquivo_saida.write(str(dict_out) + "\n")
-            except Exception as e:
-                print(f"ERRO: {e}")
-                # arquivo_saida.write(f"ERRO: {e}\n")
+
+
+#Fase  2 adaptação para interface com o parser (Aluno 3) ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def lerTokens(arquivo: str) -> list:
+    """Lê o arquivo fonte e retorna lista de listas de tokens.
+
+    Abre o arquivo .txt linha a linha, descarta linhas vazias e comentários
+    (linhas começando com '#'), e tokeniza cada instrução usando o DFA
+    estendido. Cada sublista corresponde a uma instrução do programa.
+
+    Esta é a função de interface do Aluno 3 com o Aluno 2 (parsear).
+
+    Parameters
+    ----------
+    arquivo : str
+        Caminho para o arquivo de código-fonte (.txt)
+
+    Returns
+    -------
+    list
+        Lista de listas de dicionários:
+        [
+          [{'tipo': 'KEYWORD',    'valor': 'START'}, ...],
+          [{'tipo': 'PARENTESIS', 'valor': '('}, ...],
+          ...
+          [{'tipo': 'KEYWORD',    'valor': 'END'}, ...],
+        ]
+
+    Raises
+    ------
+    ValueError
+        Se o arquivo não tiver extensão .txt
+    FileNotFoundError
+        Se o arquivo não existir
+
+    Examples
+    --------
+    >>> tokens = lerTokens('teste_fase2_1.txt')
+    >>> tokens[0]
+    [{'tipo': 'PARENTESIS', 'valor': '('}, {'tipo': 'KEYWORD', 'valor': 'START'}, ...]
+    """
+    if not arquivo.endswith(".txt"):
+        raise ValueError(
+            f"Arquivo inválido: '{arquivo}'. O arquivo deve ter extensão .txt"
+        )
+
+    try:
+        with open(arquivo, "r", encoding="utf-8") as f:
+            linhas_brutas = f.readlines()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Arquivo não encontrado: '{arquivo}'")
+
+    resultado = []
+    erros = []
+
+    for numero_linha, linha_bruta in enumerate(linhas_brutas, start=1):
+        linha = linha_bruta.strip()
+
+        # ignora linhas vazias e comentários
+        if not linha or linha.startswith("#"):
+            continue
+
+        try:
+            tokens_obj = parseExpressao(linha)
+            tokens_dicts = [t.to_dict() for t in tokens_obj]
+            if tokens_dicts:
+                resultado.append(tokens_dicts)
+        except ValueError as erro:
+            erros.append(str(erro))
+            print(f"  [ERRO LÉXICO] Linha {numero_linha}: {erro}")
+
+    if erros:
+        print(f"\n  Total de erros léxicos: {len(erros)}")
+
+    return resultado
+
+
+if __name__ == "__main__":
+    # Testa operadores relacionais novos da Fase 2
+    print("++ Operadores Relacionais ++")
+    for linha in ["( A B > )", "( A B >= )", "( A B < )", "( A B <= )", "( A B == )", "( A B != )"]:
+        tokens = [t.to_dict() for t in parseExpressao(linha)]
+        print(f"  {linha} → {tokens}")
+
+    # Testa keywords de controle
+    print("\n++ Keywords de Controle ++")
+    for linha in ["(START)", "(END)", "( A B > ) IF", "( A B > ) IFELSE", "( A B < ) WHILE"]:
+        tokens = [t.to_dict() for t in parseExpressao(linha)]
+        print(f"  {linha} → {tokens}")
+
+    # Testa erros léxicos
+    print("\n++ Erros Léxicos ++")
+    for linha in ["( A @ B + )", "( A = B )", "( A ! B )", "( 3..14 + )"]:
+        try:
+            parseExpressao(linha)
+            print(f"  [FALHOU] '{linha}' deveria gerar erro")
+        except ValueError as e:
+            print(f"  [OK] '{linha}' → {e}")
+
+    # Testa lerTokens com os arquivos
+    print("\n++lerTokens com arquivos ++")
+    for nome in ["teste_fase2_1.txt", "teste_fase2_2.txt", "teste_fase2_3.txt"]:
+        try:
+            lista = lerTokens(nome)
+            print(f"  {nome}: {len(lista)} instruções tokenizadas")
+        except FileNotFoundError:
+            print(f"  {nome}: arquivo não encontrado")
