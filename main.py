@@ -1,164 +1,84 @@
-# Nome | apelido no Github | link do Github
-# Andrei de Carvalho Bley | TODO: inserir usuario/apelido do github aqui
-# Vinicius Cordeiro Vogt | vinivaldox | https://github.com/vinivaldox
-# Vitor Matias Percegona Bilbao | TODO: inserir usuario/apelido do github aqui
-
-# Grupo: RA2 15
-# Aluno 4: Interface do Usuário e Integração Final
-
+# ==========================================
+# Responsável: Vitor Matias, Andrei Bley e Vinicius Cordeiro
+# ==========================================
 import sys
-from analisador_lexico import parseExpressao, ler_teste, lerTokens    
-from gerarAssembly import gerarAssembly
-from geren_memo import executarExpressao, validarToken, memoria, historico
-
-
-def exibirResultados(resultados: list) -> None:
-    """Exibe os resultados das expressões.
-
-    Parameters
-    ----------
-    resultados : list
-        Lista de resultados (dict ou float)
-    """
-    print("\n" + "=" * 70)
-    print("RESULTADOS DAS EXPRESSOES")
-    print("=" * 70)
-
-    for i, resultado in enumerate(resultados, 1):
-        if resultado is not None:
-            # Se for dict, mostra o tipo
-            if isinstance(resultado, dict):
-                tipo = resultado.get("tipo", "desconhecido")
-                print(f"Linha {i}: {tipo}")
-            else:
-                # Se for número, mostra com 1 casa decimal
-                try:
-                    print(f"Linha {i}: {float(resultado):.1f}")
-                except Exception:
-                    print(f"Linha {i}: {resultado}")
-        else:
-            print(f"Linha {i}: ERRO")
-
-    print("=" * 70 + "\n")
-
-
-def salvarAssembly(assembly: str, nome_arquivo: str = "saida.s") -> None:
-    """Salva código Assembly em arquivo.
-
-    Parameters
-    ----------
-    assembly : str
-        Código Assembly a salvar
-    nome_arquivo : str
-        Nome do arquivo de saída
-    """
-    try:
-        with open(nome_arquivo, "w", encoding="utf-8") as f:
-            f.write(assembly)
-        print(f"Assembly salvo em: {nome_arquivo}")
-    except IOError as e:
-        print(f"Erro ao salvar Assembly: {e}")
-
+from analisador_lexico import lerTokens                     #aluno3
+from gramatica import construirGramatica                    #aluno1
+from parsear import parsear                                 #aluno2
+from gerarAssembly import gerarArvore, gerarAssembly, imprimir_arvore, salvar_arvore_json #aluno4
 
 def main():
-    """Função principal - Integra todos os alunos.
-
-    Fluxo:
-    1. Lê arquivo (Aluno 1)
-    2. Para cada linha:
-       a. Tokeniza (Aluno 1)
-       b. Executa (Aluno 2)
-       c. Gera Assembly (Aluno 3)
-    3. Exibe e salva resultados (Aluno 4)
-    """
-
+    #verifica se o nome do arquivo foi passado como argumento
     if len(sys.argv) < 2:
-        print("Uso: python main.py <arquivo_teste.txt>")
+        print("Uso correto: python main.py <arquivo_teste.txt>")
         sys.exit(1)
-
     nome_arquivo = sys.argv[1]
-
-    print(f"\n{'=' * 70}")
-    print("COMPILADOR RPN → ASSEMBLY ARMv7")
-    print(f"{'=' * 70}")
-    print(f"Arquivo: {nome_arquivo}\n")
+    print(f"\n{'=' * 50}")
+    print("COMPILADOR RPN -> ASSEMBLY ARMv7 (Fase 2)")
+    print(f"{'=' * 50}\n")
 
     try:
-        # Lê arquivo (Aluno 1)
-        lista_tokens = lerTokens(nome_arquivo)
-        print(f"{len(lista_tokens)} instruções tokenizadas\n")
+        # ==========================================
+        # PASSO 1: ANALISADOR LÉXICO
+        # ==========================================
+        print("[1/5] Tokenizando arquivo fonte...")
+        # O lerTokens devolve uma lista de listas de tokens
+        tokens_brutos = lerTokens(nome_arquivo)
+        
+        # O Parser espera uma lista plana, então nós "achatamos" a lista aqui
+        tokens_planificados = [token for linha in tokens_brutos for token in linha]
+        print(f"OK! {len(tokens_planificados)} tokens lidos.\n")
+        # ==========================================
+        # PASSO 2: A PLANTA DA LINGUAGEM
+        # ==========================================
+        print("[2/5] Carregando a Gramática LL(1)...")
+        gramatica = construirGramatica()
+        print("OK! Gramática fatorada carregada.\n")
 
-#teste
-        print("Tokens da instrução 11:")
-        for t in lista_tokens[10]:
-            print(f"  {t}")
+        # ==========================================
+        # PASSO 3: ANALISADOR SINTÁTICO
+        # ==========================================
+        print("[3/5] Executando Análise Sintática (Parsing)...")
+        resultado_parser = parsear(tokens_planificados, gramatica)
+        
+        # Mostra erros, se houver
+        if not resultado_parser["sucesso"]:
+            print("[ERRO] O código possui erros sintáticos:")
+            for r in resultado_parser["resultados"]:
+                if not r["sucesso"]:
+                    for erro in r["erros"]:
+                        print(f"      -> {erro['mensagem']}")
+            sys.exit(1)
+        print(f"OK! {resultado_parser['resumo']}.\n")
+        # ==========================================
+        # PASSO 4: ÁRVORE SINTÁTICA
+        # ==========================================
+        print("[4/5] Gerando Árvore Sintática (AST)...")
+        arvores = gerarArvore(resultado_parser)
+        salvar_arvore_json(arvores, "arvore.json")
+        
+        print("OK! Árvore salva em 'arvore.json'. Primeira estrutura:")
+        if arvores and arvores[0] is not None:
+            print(imprimir_arvore(arvores[0], prefixo="        "))
+        print("")
 
-        resultados = []
-        todos_tokens_dicts = []
-        tokens_por_linha = []
-        assembly_completo = ""
+        # ==========================================
+        # PASSO 5: GERAÇÃO DE CÓDIGO
+        # ==========================================
+        print("[5/5] Traduzindo para Assembly ARMv7...")
+        codigo_assembly = gerarAssembly(arvores)
+        
+        with open("saida.s", "w", encoding="utf-8") as f:
+            f.write(codigo_assembly)
+        print("OK! Código salvo no arquivo 'saida.s'.\n")
 
-        # Processa cada instrução
-        for i, tokens_dicts in enumerate(lista_tokens, 1):
-            print(f"Instrução {i}: {len(tokens_dicts)} tokens")
+        print(f"{'=' * 50}")
+        print("COMPILAÇÃO CONCLUÍDA")
+        print(f"{'=' * 50}\n")
 
-            try:
-                # ===== ALUNO 3: tokens já prontos =====
-                tokens_por_linha.append(tokens_dicts)
-                todos_tokens_dicts.extend(tokens_dicts)
-
-                # ===== ALUNO 2: Execução =====
-                arvore = executarExpressao(tokens_dicts)
-                valido, mensagem = validarToken(arvore, i, memoria, historico)
-
-                if valido:
-                    resultados.append(arvore)
-                    if arvore:
-                        historico.append(arvore)
-                    print(f"{mensagem}")
-                else:
-                    print(f"{mensagem}")
-                    resultados.append(None)
-
-            except Exception as e:
-                print(f"Erro: {e}")
-                resultados.append(None)
-
-        # ===== ALUNO 3: Geração Assembly =====
-        try:
-            if todos_tokens_dicts:
-                assembly_completo = gerarAssembly(todos_tokens_dicts)
-                print("\n Assembly gerado")
-        except Exception as e:
-            print(f"\n Erro ao gerar Assembly: {e}")
-
-        # ===== ALUNO 4: Exibição e Salvamento =====
-        # Exibe resultados
-        if resultados:
-            exibirResultados(resultados)
-
-        # Salva Assembly
-        if assembly_completo:
-            salvarAssembly(assembly_completo, "saida.s")
-
-        # Salva tokens em arquivo
-        try:
-            with open("token.txt", "w", encoding="utf-8") as f:
-                for tokens_linha in tokens_por_linha:
-                    f.write(str(tokens_linha) + "\n")
-            print("Arquivo de tokens salvo: token.txt")
-        except Exception as e:
-            print(f"Erro ao salvar tokens: {e}")
-
-        print("Compilação concluída!\n")
-
-    except FileNotFoundError:
-        print(f"Arquivo '{nome_arquivo}' não encontrado.")
-        sys.exit(1)
     except Exception as e:
-        print(f"Erro: {e}")
+        print(f"\n ERRO: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
