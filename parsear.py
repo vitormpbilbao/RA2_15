@@ -359,7 +359,7 @@ class ParserLL1:
         self.derivacoes = []
         self.erros = []
 
-        arvore = self.parsearPrograma()
+        arvore = self.parser_programa()
 
         return {
             "numero_comando": num_comando,
@@ -450,7 +450,7 @@ def parsear(tokens_planificados: list[dict], gramatica: str) -> dict:
     resultados = []
 
     for num_cmd, tokens_cmd in enumerate(comandos, 1):
-        resultado = parser.parsearComandoCompleto(tokens_cmd, num_cmd)
+        resultado = parser.parser_comando_completo(tokens_cmd, num_cmd)
         resultados.append(resultado)
 
     # Resumo
@@ -506,6 +506,6 @@ if __name__ == "__main__":
     ]
 
     print("\nTeste 1: Programa com número")
-    resultado = parser.parsearComandoCompleto(tokens_teste1, 1)
+    resultado = parser.parser_comando_completo(tokens_teste1, 1)
     print(f"Sucesso: {resultado['sucesso']}")
     print(f"Derivacoes: {resultado['derivacoes'][:5]}")
