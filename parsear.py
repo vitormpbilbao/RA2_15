@@ -12,7 +12,12 @@ Descrição:
 """
 
 from dataclasses import dataclass, field
-from gramatica import calcularFirst, calcularFollow, construirTabelaLL1  # pyright: ignore[reportMissingImports] # noqa: F401
+
+try:
+    from gramatica import calcularFirst, calcularFollow, construirTabelaLL1
+except Exception as e:
+    print(f"Erro ao importar módulos: {e}")
+    pass
 
 
 @dataclass
@@ -121,24 +126,24 @@ class ParserLL1:
             self.indice_token += 1
         return token
 
-    def _add_erro(self, esperado: str, encontrado: str):
+    def _add_erro(self, esperado: str, encontrado: str, contexto: str):
         erro = ErroSintatico(
             numero_comando=self.numero_comando,
             indice_token=self.indice_token,
             esperado=esperado,
             encontrado=encontrado,
             mensagem=f"Cmd {self.numero_comando}[{self.indice_token}]: "
-            f"Esperado '{esperado}', encontrado '{encontrado}'",
+            f"Esperado '{esperado}', encontrado '{encontrado}' ({contexto})",
         )
         self.erros.append(erro)
 
-    def _combinarTerminal(self, esperado, contexto, no):
+    def _combinar_terminal(self, esperado, contexto, no):
         """Combina um terminal esperado com o próximo token."""
-        token = self._proximoToken()
-        terminal = self.obterTerminal(token)
+        token = self._next_token()
+        terminal = self.get_terminal(token)
 
         if terminal == esperado:
-            self._avancarToken()
+            self._get_next_token()
             if token:
                 no_terminal = NoArvore(
                     esperado, "terminal", valor=token.get("valor", "")
@@ -146,88 +151,221 @@ class ParserLL1:
                 no.filhos.append(no_terminal)
             return True
         else:
-            self._adicionarErro(esperado, terminal, contexto)
+            self._add_erro(esperado, terminal, contexto)
             return False
 
     def _add_derivacao(self, derivacao: str):
         self.derivacoes.append(derivacao)
 
-    def parsearComando(self, tokens: list[dict], num_comando: int) -> dict:
-        # TODO MELHORAR A DOCSTR
-        # TODO ATUALIZAR ESSA FUNÇÃO DEPOIS QUE A GRAMÁTICA ESTIVER DEFINIDA, JA QUE ISSO VAI MUDAR MUITO O FLUXO DO PARSER
-        """
-        Algoritmo LL(1) não-recursivo com pilha.
+    def parser_programa(self):
+        """Programa ::= ( START ) ListaOuFim"""
+        no = NoArvore("Programa", "nao_terminal")
 
-        Algoritmo:
-        1. Inicializar pilha com ['$', 'Programa']
-        2. Enquanto pilha não vazia:
-           a. Se topo == terminal: combinar com entrada
-           b. Se topo == não-terminal: consultar gramática
-           c. Se topo == '$': verificar EOF
-        """
-        self.tokens_atuais = tokens
-        self.indice_token = 0
+        if not self._combinar_terminal("PARENTESIS_ESQ", "inicio de programa", no):
+            return None
+
+        if not self._combinar_terminal("START", "palavra-chave START", no):
+            return None
+
+        if not self._combinar_terminal("PARENTESIS_DIR", "fim de START", no):
+            return None
+
+        lista_no = self.parser_lista_OuFim()
+        if lista_no:
+            no.filhos.append(lista_no)
+
+        return no
+
+    def parser_lista_OuFim(self):
+        """ListaOuFim ::= ( ConteudoOuFim )"""
+        no = NoArvore("ListaOuFim", "nao_terminal")
+
+        if not self._combinar_terminal("PARENTESIS_ESQ", "inicio de ListaOuFim", no):
+            return None
+
+        conteudo_no = self.parser_conteudo_Fim()
+        if conteudo_no:
+            no.filhos.append(conteudo_no)
+
+        if not self._combinar_terminal("PARENTESIS_DIR", "fim de ConteudoOuFim", no):
+            return None
+
+        return no
+
+    def parser_conteudo_Fim(self):
+        """ConteudoOuFim ::= END | Conteudo ListaOuFim"""
+        no = NoArvore("ConteudoOuFim", "nao_terminal")
+
+        token = self._next_token()
+        if not token:
+            return None
+
+        terminal = self.get_terminal(token)
+
+        # Caso 1: END
+        if terminal == "END":
+            no_end = NoArvore("END", "terminal", valor=token.get("valor"))
+            no.filhos.append(no_end)
+            self._get_next_token()
+            self._add_derivacao("ConteudoOuFim -> END")
+            return no
+
+        # Caso 2: Conteudo ListaOuFim
+        conteudo_no = self.parser_conteudo()
+        if conteudo_no:
+            no.filhos.append(conteudo_no)
+
+            lista_no = self.parser_lista_OuFim()
+            if lista_no:
+                no.filhos.append(lista_no)
+
+            self._add_derivacao("ConteudoOuFim -> Conteudo ListaOuFim")
+            return no
+
+        return None
+
+    def parser_comando(self):
+        """Comando ::= ( Conteudo )"""
+        no = NoArvore("Comando", "nao_terminal")
+
+        if not self._combinar_terminal("PARENTESIS_ESQ", "inicio de comando", no):
+            return None
+
+        conteudo_no = self.parser_conteudo()
+        if conteudo_no:
+            no.filhos.append(conteudo_no)
+
+        if not self._combinar_terminal("PARENTESIS_DIR", "fim de comando", no):
+            return None
+
+        self._add_derivacao("Comando -> ( Conteudo )")
+        return no
+
+    def parser_conteudo(self):
+        """Conteudo ::= Elemento RestoConteudo"""
+        no = NoArvore("Conteudo", "nao_terminal")
+
+        elem_no = self.parser_elemento()
+        if elem_no:
+            no.filhos.append(elem_no)
+
+        resto_no = self.parser_resto_conteudo()
+        if resto_no:
+            no.filhos.append(resto_no)
+
+        self._add_derivacao("Conteudo -> Elemento RestoConteudo")
+        return no
+
+    def parser_resto_conteudo(self):
+        """RestoConteudo ::= Elemento Cauda | RES | epsilon"""
+        no = NoArvore("RestoConteudo", "nao_terminal")
+
+        token = self._next_token()
+        if not token:
+            self._add_derivacao("RestoConteudo -> epsilon")
+            return no
+
+        terminal = self.get_terminal(token)
+
+        # Caso 1: RES
+        if terminal == "RES":
+            no_res = NoArvore("RES", "terminal", valor=token.get("valor"))
+            no.filhos.append(no_res)
+            self._get_next_token()
+            self._add_derivacao("RestoConteudo -> RES")
+            return no
+
+        # Caso 2: Elemento Cauda
+        if terminal in ["NUMERO", "VARIAVEL", "PARENTESIS_ESQ"]:
+            elem_no = self.parser_elemento()
+            if not elem_no:
+                return None  # Erro ao parsear Elemento
+
+            no.filhos.append(elem_no)
+
+            cauda_no = self.parser_cauda()
+            if cauda_no:
+                no.filhos.append(cauda_no)
+
+            self._add_derivacao("RestoConteudo -> Elemento Cauda")
+            return no
+
+    def parser_cauda(self):
+        """Cauda ::= OPERADOR | MEM | IF | WHILE | FOR"""
+        no = NoArvore("Cauda", "nao_terminal")
+
+        token = self._next_token()
+        if not token:
+            self._add_derivacao("Cauda -> epsilon")
+            return no
+
+        terminal = self.get_terminal(token)
+
+        if terminal == "OPERADOR":
+            no_op = NoArvore("OPERADOR", "terminal", valor=token.get("valor"))
+            no.filhos.append(no_op)
+            self._get_next_token()
+            self._add_derivacao("Cauda -> OPERADOR")
+            return no
+        elif terminal in ["MEM", "IF", "WHILE", "FOR"]:
+            no_cmd = NoArvore(terminal, "terminal", valor=token.get("valor"))
+            no.filhos.append(no_cmd)
+            self._get_next_token()
+            self._add_derivacao("Cauda -> %s" % terminal)
+            return no
+
+        # epsilon
+        self._add_derivacao("Cauda -> epsilon")
+        return no
+
+    def parser_elemento(self):
+        """Elemento ::= NUMERO | VARIAVEL | Comando"""
+        no = NoArvore("Elemento", "nao_terminal")
+
+        token = self._next_token()
+        if not token:
+            self._add_erro("Elemento", "$", "elemento")
+            return None
+
+        terminal = self.get_terminal(token)
+
+        if terminal == "NUMERO":
+            no_num = NoArvore("NUMERO", "terminal", valor=token.get("valor"))
+            no.filhos.append(no_num)
+            self._get_next_token()
+            self._add_derivacao("Elemento -> NUMERO")
+            return no
+        elif terminal == "VARIAVEL":
+            no_var = NoArvore("VARIAVEL", "terminal", valor=token.get("valor"))
+            no.filhos.append(no_var)
+            self._get_next_token()
+            self._add_derivacao("Elemento -> VARIAVEL")
+            return no
+        elif terminal == "PARENTESIS_ESQ":
+            cmd_no = self.parser_comando()
+            if cmd_no:
+                no.filhos.append(cmd_no)
+                self._add_derivacao("Elemento -> Comando")
+                return no
+
+        self._add_erro("NUMERO/VARIAVEL/COMANDO", terminal, "elemento")
+        return None
+
+    def parser_comando_completo(self, tokens, num_comando):
+        """Processa um único comando e retorna resultado estruturado."""
+        self.tokens = tokens
+        self.posicao = 0
         self.numero_comando = num_comando
-        self.pilha_analise = ["$", "Programa"]
         self.derivacoes = []
         self.erros = []
-        self.arvore = NoArvore("Programa", "nao_terminal")
 
-        while self.pilha_analise:
-            topo = self.pilha_analise[-1]
-            token_atual = self._next_token()
-            terminal_atual = self.get_terminal(token_atual) if token_atual else "$"
+        arvore = self.parsearPrograma()
 
-            # Caso 1: Topo é terminal - deve combinar
-            if self._is_terminal(topo):
-                if topo == terminal_atual:
-                    print(f"Combina: {topo}")
-                    self._get_next_token()
-                    self.pilha_analise.pop()
-                else:
-                    self._add_erro(esperado=topo, encontrado=terminal_atual)
-                    return self._construir_resultado(sucesso=False)
-
-            # Caso 2: Topo é $ (marcador de fim)
-            elif topo == "$":
-                if terminal_atual == "$":
-                    print("Programa reconhecido")
-                    self.pilha_analise.pop()
-                else:
-                    self._add_erro(esperado="EOF", encontrado=terminal_atual)
-                    return self._construir_resultado(sucesso=False)
-
-            # Caso 3: Topo é não-terminal - usar gramática
-            else:
-                regras = self.gramatica.get(topo, [])
-
-                # Encontrar regra correta
-                regra_aplicada = self._selecionar_regra(terminal_atual, regras)
-
-                if regra_aplicada is None:
-                    self._add_erro(
-                        esperado=f"Nao-terminal '{topo}'",
-                        encontrado=terminal_atual,
-                    )
-                    return self._construir_resultado(sucesso=False)
-
-                # Aplicar regra: substituir topo por derivação (inverso)
-                self.pilha_analise.pop()
-                for simbolo in reversed(regra_aplicada):
-                    if simbolo != "EPSILON":
-                        self.pilha_analise.append(simbolo)
-
-                self._add_derivacao(f"{topo} → {' '.join(regra_aplicada)}")
-
-        return self._construir_resultado(sucesso=True)
-
-    def _construir_resultado(self, sucesso: bool) -> dict:
-        """Constrói dicionário de resultado do parsing."""
         return {
-            "numero_comando": self.numero_comando,
-            "sucesso": sucesso and len(self.erros) == 0,
+            "numero_comando": num_comando,
+            "sucesso": arvore is not None and len(self.erros) == 0,
+            "arvore": arvore.serializar() if arvore else None,
             "derivacoes": self.derivacoes,
-            "arvore": self._serializar_arvore(self.arvore),
             "erros": [
                 {
                     "numero_comando": e.numero_comando,
@@ -280,12 +418,13 @@ def agruparTokensPorComando(tokens_planificados: list[dict]) -> list[list[dict]]
     return comandos
 
 
-def parsear(tokens_planificados: list[dict]) -> dict:
+def parsear(tokens_planificados: list[dict], gramatica: str) -> dict:
     """
     Função principal - processa todos os comandos.
 
     Args:
         tokens_planificados: Lista única de tokens (do Aluno 3)
+        gramatica: String da gramática (do Aluno 1)
 
     Returns:
         {
@@ -303,7 +442,7 @@ def parsear(tokens_planificados: list[dict]) -> dict:
             'resumo': str
         }
     """
-    parser = ParserLL1()
+    parser = ParserLL1(gramatica)
 
     # Agrupar tokens por comando
     comandos = agruparTokensPorComando(tokens_planificados)
@@ -311,33 +450,62 @@ def parsear(tokens_planificados: list[dict]) -> dict:
     resultados = []
 
     for num_cmd, tokens_cmd in enumerate(comandos, 1):
-        print(f"\nComando {num_cmd}: {[t['valor'] for t in tokens_cmd]}")
-
-        resultado = parser.parsearComando(tokens_cmd, num_cmd)
+        resultado = parser.parsearComandoCompleto(tokens_cmd, num_cmd)
         resultados.append(resultado)
+
+    # Resumo
+    sucessos = sum(1 for r in resultados if r["sucesso"])
+    total = len(resultados)
 
     return {
         "sucesso": all(r["sucesso"] for r in resultados),
         "resultados": resultados,
-        "resumo": f"{sum(1 for r in resultados if r['sucesso'])}/{len(resultados)} comandos válidos",
+        "resumo": "%d/%d comandos válidos" % (sucessos, total),
     }
 
 
 if __name__ == "__main__":
-    print("Rodando o PARSER LL(1)")
+    print("Parser LL(1) Recursivo Descendente - Aluno 2")
+    print("Com Gramática Dinâmica (não hardcoded)\n")
 
-    print("\nEstruturas de dados:")
-    no = NoArvore("Programa", "nao_terminal")
-    print(f"   No: {no}")
+    # Gramática de teste
+    gramatica = {
+        "Programa": [["PARENTESIS_ESQ", "START", "PARENTESIS_DIR", "ListaOuFim"]],
+        "ListaOuFim": [["PARENTESIS_ESQ", "ConteudoOuFim"]],
+        "ConteudoOuFim": [
+            ["END", "PARENTESIS_DIR"],
+            ["Conteudo", "PARENTESIS_DIR", "ListaOuFim"],
+        ],
+        "Comando": [["PARENTESIS_ESQ", "Conteudo", "PARENTESIS_DIR"]],
+        "Conteudo": [["Elemento", "RestoConteudo"]],
+        "RestoConteudo": [["Elemento", "Cauda"], ["RES"], ["EPSILON"]],
+        "Cauda": [["OPERADOR"], ["MEM"], ["IF"], ["WHILE"]],
+        "Elemento": [["NUMERO"], ["VARIAVEL"], ["Comando"]],
+    }
 
-    erro = ErroSintatico(
-        1, 5, "NUMERO", "VARIAVEL", "Esperado NUMERO, encontrado VARIAVEL"
-    )
-    print(f"   Erro: {erro}")
+    parser = ParserLL1(gramatica)
+    print("=== TABELA LL(1) GERADA COM SUCESSO ===")
+    for nt, mapeamento in parser.tabela_ll1.items():
+        print(f"\n[{nt}]:")
+        for terminal, regra in mapeamento.items():
+            print(f"  Se ler '{terminal}' -> Usar regra: {regra}")
 
-    print("\nClasse ParserLL1:")
-    parser = ParserLL1()
-    print(f"   Não-terminais: {list(parser.gramatica.keys())}")
-    print(
-        f"   Total de regras: {sum(len(regras) for regras in parser.gramatica.values())}"
-    )
+    print("\n\n=== TESTES DE PARSING ===")
+
+    # Teste 1: Programa simples com números
+    tokens_teste1 = [
+        {"tipo": "PARENTESIS", "valor": "("},
+        {"tipo": "NUMERO", "valor": "START"},
+        {"tipo": "PARENTESIS", "valor": ")"},
+        {"tipo": "PARENTESIS", "valor": "("},
+        {"tipo": "NUMERO", "valor": "123"},
+        {"tipo": "PARENTESIS", "valor": ")"},
+        {"tipo": "PARENTESIS", "valor": "("},
+        {"tipo": "NUMERO", "valor": "END"},
+        {"tipo": "PARENTESIS", "valor": ")"},
+    ]
+
+    print("\nTeste 1: Programa com número")
+    resultado = parser.parsearComandoCompleto(tokens_teste1, 1)
+    print(f"Sucesso: {resultado['sucesso']}")
+    print(f"Derivacoes: {resultado['derivacoes'][:5]}")
