@@ -160,6 +160,75 @@ class ParserLL1:
 
         return None
 
+    def parsearComando(self, tokens: list[dict], num_comando: int) -> dict:
+        # TODO MELHORAR A DOCSTR
+        # TODO ATUALIZAR ESSA FUNÇÃO DEPOIS QUE A GRAMÁTICA ESTIVER DEFINIDA, JA QUE ISSO VAI MUDAR MUITO O FLUXO DO PARSER
+        """
+        Algoritmo LL(1) não-recursivo com pilha.
+
+        Algoritmo:
+        1. Inicializar pilha com ['$', 'Programa']
+        2. Enquanto pilha não vazia:
+           a. Se topo == terminal: combinar com entrada
+           b. Se topo == não-terminal: consultar gramática
+           c. Se topo == '$': verificar EOF
+        """
+        self.tokens_atuais = tokens
+        self.indice_token = 0
+        self.numero_comando = num_comando
+        self.pilha_analise = ["$", "Programa"]
+        self.derivacoes = []
+        self.erros = []
+        self.arvore = NoArvore("Programa", "nao_terminal")
+
+        while self.pilha_analise:
+            topo = self.pilha_analise[-1]
+            token_atual = self._next_token()
+            terminal_atual = self.get_terminal(token_atual) if token_atual else "$"
+
+            # Caso 1: Topo é terminal - deve combinar
+            if self._is_terminal(topo):
+                if topo == terminal_atual:
+                    print(f"Combina: {topo}")
+                    self._get_next_token()
+                    self.pilha_analise.pop()
+                else:
+                    self._add_erro(esperado=topo, encontrado=terminal_atual)
+                    return self._construir_resultado(sucesso=False)
+
+            # Caso 2: Topo é $ (marcador de fim)
+            elif topo == "$":
+                if terminal_atual == "$":
+                    print("Programa reconhecido")
+                    self.pilha_analise.pop()
+                else:
+                    self._add_erro(esperado="EOF", encontrado=terminal_atual)
+                    return self._construir_resultado(sucesso=False)
+
+            # Caso 3: Topo é não-terminal - usar gramática
+            else:
+                regras = self.gramatica.get(topo, [])
+
+                # Encontrar regra correta
+                regra_aplicada = self._selecionar_regra(terminal_atual, regras)
+
+                if regra_aplicada is None:
+                    self._add_erro(
+                        esperado=f"Nao-terminal '{topo}'",
+                        encontrado=terminal_atual,
+                    )
+                    return self._construir_resultado(sucesso=False)
+
+                # Aplicar regra: substituir topo por derivação (inverso)
+                self.pilha_analise.pop()
+                for simbolo in reversed(regra_aplicada):
+                    if simbolo != "EPSILON":
+                        self.pilha_analise.append(simbolo)
+
+                self._add_derivacao(f"{topo} → {' '.join(regra_aplicada)}")
+
+        return self._construir_resultado(sucesso=True)
+
 
 if __name__ == "__main__":
     print("Rodando o PARSER LL(1)")
