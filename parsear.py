@@ -45,6 +45,7 @@ class ErroSintatico:
 
 class ParserLL1:
     def __init__(self):
+        # TODO, ESSE METODO É MEIO ESTRANHO, melhor parametrizar isso aqui
         # Verifica import da gramatica ja que não existe um arquivo de gramatica.py nessa branch
         try:
             from gramatica import construirGramatica  # pyright: ignore[reportMissingImports]
@@ -141,10 +142,29 @@ class ParserLL1:
             "filhos": [self._serializar_arvore(filho) for filho in no.filhos],
         }
 
+    def _selecionar_regra(self, terminal: str, regras: list) -> list | None:
+        """Seleciona a regra correta baseada em FIRST/FOLLOW."""
+        for regra in regras:
+            if not regra:
+                continue
+
+            primeiro_simbolo = regra[0]
+
+            if self._is_terminal(primeiro_simbolo):
+                if primeiro_simbolo == terminal:
+                    return regra
+            elif primeiro_simbolo == "EPSILON":
+                return regra
+            else:
+                return regra
+
+        return None
+
 
 if __name__ == "__main__":
-    print("Estruturas de dados importadas com sucesso!")
+    print("Rodando o PARSER LL(1)")
 
+    print("\nEstruturas de dados:")
     no = NoArvore("Programa", "nao_terminal")
     print(f"   No: {no}")
 
@@ -153,7 +173,7 @@ if __name__ == "__main__":
     )
     print(f"   Erro: {erro}")
 
-    print("\nClasse ParserLL1 inicializada com sucesso!")
+    print("\nClasse ParserLL1:")
     parser = ParserLL1()
     print(f"   Não-terminais: {list(parser.gramatica.keys())}")
     print(
