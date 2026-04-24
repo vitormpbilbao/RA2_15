@@ -1,11 +1,3 @@
-"""
- explicando:
-função responsável por traduzir tokens RPN em formato de dicionário para ARMv7 (formato pedido pelo prof).
-a geração é dividida em duas seções principais:
-.data: trabalha com a alocalçao estática das constantes, com literais (64bits) e vars
-.text: faz a logica das op matemáticas usando a FPU e os registradosres d
-"""
-
 
 def gerarAssembly(_tokens_):
     # .data

@@ -1,6 +1,5 @@
 import ast
 
-
 def lerTokenStr(nomeArquivo):
     """
     Lê o arquivo de tokens, corrige quebras de linha no meio dos dicionários

@@ -1,7 +1,5 @@
 def lerTokensDict(nomeArquivo):
-    """
-    Lê o arquivo dos tokens gerado pelo Aluno 1 e retorna uma lista de linhas de dicionários de tolkens
-    """
+
     import ast  # converter a string em lista de dicionários
 
     linhas = []
