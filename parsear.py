@@ -229,6 +229,25 @@ class ParserLL1:
 
         return self._construir_resultado(sucesso=True)
 
+    def _construir_resultado(self, sucesso: bool) -> dict:
+        """Constrói dicionário de resultado do parsing."""
+        return {
+            "numero_comando": self.numero_comando,
+            "sucesso": sucesso and len(self.erros) == 0,
+            "derivacoes": self.derivacoes,
+            "arvore": self._serializar_arvore(self.arvore),
+            "erros": [
+                {
+                    "numero_comando": e.numero_comando,
+                    "indice_token": e.indice_token,
+                    "esperado": e.esperado,
+                    "encontrado": e.encontrado,
+                    "mensagem": e.mensagem,
+                }
+                for e in self.erros
+            ],
+        }
+
 
 if __name__ == "__main__":
     print("Rodando o PARSER LL(1)")
