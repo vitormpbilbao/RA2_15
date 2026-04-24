@@ -288,6 +288,51 @@ def agruparTokensPorComando(tokens_planificados: list[dict]) -> list[list[dict]]
     return comandos
 
 
+def parsear(tokens_planificados: list[dict]) -> dict:
+    """
+    Função principal - processa todos os comandos.
+
+    Args:
+        tokens_planificados: Lista única de tokens (do Aluno 3)
+
+    Returns:
+        {
+            'sucesso': bool,
+            'resultados': [
+                {
+                    'numero_comando': int,
+                    'sucesso': bool,
+                    'derivacoes': list,
+                    'arvore': dict,
+                    'erros': list
+                },
+                ...
+            ],
+            'resumo': str
+        }
+    """
+    parser = ParserLL1()
+
+    # Agrupar tokens por comando
+    comandos = agruparTokensPorComando(tokens_planificados)
+
+    resultados = []
+
+    for num_cmd, tokens_cmd in enumerate(comandos, 1):
+        print(f"\n{'=' * 60}")
+        print(f"Comando {num_cmd}: {[t['valor'] for t in tokens_cmd]}")
+        print(f"{'=' * 60}")
+
+        resultado = parser.parsearComando(tokens_cmd, num_cmd)
+        resultados.append(resultado)
+
+    return {
+        "sucesso": all(r["sucesso"] for r in resultados),
+        "resultados": resultados,
+        "resumo": f"{sum(1 for r in resultados if r['sucesso'])}/{len(resultados)} comandos válidos",
+    }
+
+
 if __name__ == "__main__":
     print("Rodando o PARSER LL(1)")
 
