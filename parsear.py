@@ -249,6 +249,45 @@ class ParserLL1:
         }
 
 
+def agruparTokensPorComando(tokens_planificados: list[dict]) -> list[list[dict]]:
+    """
+    Agrupa tokens em comandos (cada comando começa e termina com parênteses).
+
+    Entrada: [
+        {'tipo': 'PARENTESIS', 'valor': '('},
+        {'tipo': 'NUMERO', 'valor': '10'},
+        {'tipo': 'VARIAVEL', 'valor': 'CONTADOR'},
+        {'tipo': 'COMANDO', 'valor': 'MEM'},
+        {'tipo': 'PARENTESIS', 'valor': ')'},
+        ...
+    ]
+
+    Saída: [
+        [{'tipo': 'PARENTESIS', 'valor': '('}, ...],
+        [{'tipo': 'PARENTESIS', 'valor': '('}, ...],
+    ]
+    """
+    comandos = []
+    comando_atual = []
+    profundidade = 0
+
+    for token in tokens_planificados:
+        if token["tipo"] == "PARENTESIS":
+            if token["valor"] == "(":
+                profundidade += 1
+            elif token["valor"] == ")":
+                profundidade -= 1
+
+        comando_atual.append(token)
+
+        # Comando termina quando profundidade volta a 0
+        if profundidade == 0 and comando_atual:
+            comandos.append(comando_atual)
+            comando_atual = []
+
+    return comandos
+
+
 if __name__ == "__main__":
     print("Rodando o PARSER LL(1)")
 
