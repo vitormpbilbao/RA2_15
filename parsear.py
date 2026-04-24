@@ -319,9 +319,7 @@ def parsear(tokens_planificados: list[dict]) -> dict:
     resultados = []
 
     for num_cmd, tokens_cmd in enumerate(comandos, 1):
-        print(f"\n{'=' * 60}")
-        print(f"Comando {num_cmd}: {[t['valor'] for t in tokens_cmd]}")
-        print(f"{'=' * 60}")
+        print(f"\nComando {num_cmd}: {[t['valor'] for t in tokens_cmd]}")
 
         resultado = parser.parsearComando(tokens_cmd, num_cmd)
         resultados.append(resultado)
