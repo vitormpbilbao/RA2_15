@@ -21,7 +21,14 @@ def main():
         # ==========================================
         # PASSO 1: ANALISADOR LÉXICO
         # ==========================================
-    
+        print("[1/5] Tokenizando arquivo fonte...")
+        # O lerTokens devolve uma lista de listas de tokens
+        tokens_brutos = lerTokens(nome_arquivo)
+        
+        # O Parser espera uma lista plana, então nós "achatamos" a lista aqui
+        tokens_planificados = [token for linha in tokens_brutos for token in linha]
+        print(f"      OK! {len(tokens_planificados)} tokens lidos.\n")
+        
         #TODO
         
         # ==========================================
