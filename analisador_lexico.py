@@ -7,7 +7,7 @@
 from dataclasses import dataclass
 
 COMANDOS = {"MEM", "RES"}
-KEYWORDS = {"START", "END", "IF", "IFELSE", "WHILE"}
+KEYWORDS = {"START", "END", "IF", "IFELSE", "WHILE", "FOR"}
 
 @dataclass
 class Token:
