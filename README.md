@@ -38,14 +38,14 @@ Implementação de um compilador completo baseado em uma gramática LL(1) fatora
 Certifique-se de que todos os arquivos `.py` estejam no mesmo diretório e execute:
 
 ```bash
-python main.py <arquivo_teste.txt>
+python analisador_sintatico.py <arquivo_teste.txt>
 ```
 
 
 **Exemplo**:
 
 ```bash
-python main.py teste_1.txt
+python analisador_sintatico.py teste_1.txt
 ```
 
 ## Arquivos de Saída
@@ -59,6 +59,6 @@ python main.py teste_1.txt
 - `gramatica.py`: Definição da gramática fatorada e lógica para tabelas LL(1).
 - `parsear.py`: Motor de análise sintática que consome os tokens e constrói a AST.
 - `gerarAssembly.py`: Tradutor da AST para instruções Assembly ARMv7 e manipulador de arquivos JSON.
-- `main.py`: Orquestrador que executa as 5 fases da compilação.
+- `analisador_sintatico.py`: Orquestrador que executa as 5 fases da compilação.
 - `documentacaoLL1.md`: Documentação técnica contendo os conjuntos FIRST, FOLLOW e a Tabela de Análise.
 - `teste_1.txt`, `teste_2.txt`, `teste_3.txt`: Programas fonte para validação do compilador.
