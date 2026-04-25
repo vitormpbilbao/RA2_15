@@ -91,7 +91,7 @@ Abaixo encontra-se o mapeamento determinístico gerado na última execução. **
 ---
 ## 5. Árvore Sintática — Geração e Estrutura
  
-**Responsável:** Todos (integração final coordenada por Vitor e Andrei)
+**Responsável:** Todos (integração final coordenada por Vitor, Andrei e Vinicius)
  
 ### 5.1. Como a árvore é construída
  
