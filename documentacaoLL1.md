@@ -89,4 +89,149 @@ Abaixo encontra-se o mapeamento determinístico gerado na última execução. **
 * Se ler 'PARENTESIS_ESQ' -> Usar regra: `['comando']`
 
 ---
-*COLOCA AS PARADAS DO ALUNO 4 AQUI, TMJ AMIGOS*
+## 5. Árvore Sintática — Geração e Estrutura
+ 
+**Responsável:** Todos (integração final coordenada por Vitor e Andrei)
+ 
+### 5.1. Como a árvore é construída
+ 
+A árvore sintática é gerada em dois passos. Primeiro, o *parser* (`parsear.py`) produz um dicionário serializado com a derivação completa de cada instrução. Em seguida, a função `gerarArvore()` em `gerarAssembly.py` percorre esse dicionário recursivamente e reconstrói objetos `No` navegáveis.
+ 
+Cada nó da árvore tem três campos:
+- `rotulo`: nome do símbolo gramatical (ex: `Conteudo`, `OPERADOR`, `VARIAVEL`)
+- `tipo`: `"terminal"` para folhas ou `"nao_terminal"` para nós internos
+- `valor`: preenchido apenas para terminais (ex: `"+"`, `"3.14"`, `"MEM"`)
+### 5.2. Exemplo de árvore — instrução `( A PI + )`
+ 
+```
+└─ Programa
+   ├─ PARENTESIS_ESQ: '('
+   ├─ START: 'START'
+   ├─ PARENTESIS_DIR: ')'
+   └─ ListaOuFim
+      ├─ PARENTESIS_ESQ: '('
+      └─ ConteudoOuFim
+         ├─ Conteudo
+         │  ├─ Elemento
+         │  │  └─ VARIAVEL: 'A'
+         │  └─ RestoConteudo
+         │     ├─ Elemento
+         │     │  └─ VARIAVEL: 'PI'
+         │     └─ Cauda
+         │        └─ OPERADOR: '+'
+         ├─ PARENTESIS_DIR: ')'
+         └─ ListaOuFim
+            └─ ...
+```
+ 
+### 5.3. Exemplo de árvore — estrutura `IF`
+ 
+```
+└─ Conteudo
+   ├─ Elemento
+   │  └─ Comando           ← bloco da condição ( A PI > )
+   │     ├─ PARENTESIS_ESQ: '('
+   │     ├─ Conteudo
+   │     │  ├─ Elemento
+   │     │  │  └─ VARIAVEL: 'A'
+   │     │  └─ RestoConteudo
+   │     │     ├─ Elemento
+   │     │     │  └─ VARIAVEL: 'PI'
+   │     │     └─ Cauda
+   │     │        └─ OPERADOR: '>'
+   │     └─ PARENTESIS_DIR: ')'
+   └─ RestoConteudo
+      ├─ Elemento
+      │  └─ Comando          ← bloco do corpo ( ( 1 FLAG MEM ) )
+      └─ Cauda
+         └─ IF: 'IF'         ← keyword que fecha a estrutura
+```
+ 
+### 5.4. Arquivo de saída
+ 
+A árvore completa do último teste executado é salva em `arvore.json`. O formato é um array JSON onde cada objeto representa uma instrução do programa:
+ 
+```json
+[
+  {
+    "instrucao": 1,
+    "arvore": {
+      "rotulo": "Programa",
+      "tipo": "nao_terminal",
+      "valor": null,
+      "filhos": [ ... ]
+    }
+  },
+  {
+    "instrucao": 5,
+    "arvore": null,
+    "erro": "instrução com erro sintático"
+  }
+]
+```
+ 
+---
+ 
+## 6. Geração de Código Assembly ARMv7
+ 
+**Responsável:** Todos (integração final coordenada por Vitor e Andrei)
+ 
+### 6.1. Estratégia
+ 
+O código assembly é gerado diretamente a partir da árvore sintática, sem representação intermediária. A função `gerarAssembly()` instancia a classe `GeradorAssembly`, que percorre cada nó da árvore com o método `_visitar()` e despacha para o gerador correto de acordo com o tipo e valor do nó.
+ 
+Todas as operações usam a FPU (VFPv3) com registradores de precisão dupla (`d0`–`d7`). Os operandos são empilhados via `VPUSH` e desempilhados via `VPOP`, seguindo o modelo de pilha RPN herdado da Fase 1.
+ 
+### 6.2. Mapeamento de operadores para instruções
+ 
+| Operador | Instrução ARMv7 | Observação |
+|---|---|---|
+| `+` | `VADD.F64 d0, d2, d1` | |
+| `-` | `VSUB.F64 d0, d2, d1` | |
+| `*` | `VMUL.F64 d0, d2, d1` | |
+| `/` e `\|` | `VDIV.F64 d0, d2, d1` | divisão real |
+| `//` | `VDIV` + `VCVT` trunca | divisão inteira via FPU |
+| `%` | `VDIV` + `VCVT` + `VMUL` + `VSUB` | resto via FPU |
+| `^` | loop com `VMUL.F64` | potência por iteração |
+| `>`, `<`, `>=`, `<=`, `==`, `!=` | `VCMPE.F64` + `VMRS` + desvio | coloca 1.0 ou 0.0 na pilha |
+ 
+### 6.3. Geração de IF e WHILE
+ 
+Para estruturas de controle, o gerador detecta o padrão `Conteudo → Elemento RestoConteudo` com uma `Cauda` contendo `IF` ou `WHILE`. Quando encontra esse padrão:
+ 
+**IF:** avalia a condição (resultado fica no topo da pilha), compara com `0.0` usando `VCMPE.F64`, e desvia para `fim_if_N` se for falso.
+ 
+```asm
+    @ IF: testa condição no topo da pilha
+    VPOP {d0}
+    LDR r0, =zero_if_0
+    VLDR.F64 d1, [r0]
+    VCMPE.F64 d0, d1
+    VMRS APSR_nzcv, FPSCR
+    BEQ fim_if_0
+    @ corpo do IF
+    ...
+fim_if_0:
+```
+ 
+**WHILE:** reavalia a condição no início de cada iteração. Se falsa, sai do loop com `BEQ fim_while_N`.
+ 
+```asm
+inicio_while_0:
+    @ avalia condição
+    ...
+    VPOP {d0}
+    LDR r0, =zero_while_0
+    VLDR.F64 d1, [r0]
+    VCMPE.F64 d0, d1
+    VMRS APSR_nzcv, FPSCR
+    BEQ fim_while_0
+    @ corpo do WHILE
+    ...
+    B inicio_while_0
+fim_while_0:
+```
+ 
+### 6.4. Seção `.data`
+ 
+Literais numéricos e variáveis são declarados estaticamente na seção `.data`. O gerador cria entradas únicas para cada literal (`num_0`, `num_1`, ...) e inicializa variáveis com `0.0`. Constantes auxiliares para comparações (`zero_if_N`, `rel_true_N`, `rel_false_N`) também são emitidas dinamicamente conforme necessário.

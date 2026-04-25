@@ -14,7 +14,6 @@
 ( 1 RES )
 ( 3 RES )
 ( ( 1 RES ) E * )
-( ( VALOR 50 >= ) ( ( 1 GRANDE MEM ) ) ( ( 0 GRANDE MEM ) ) IFELSE )
 ( GRANDE )
 ( 0 ACUM MEM )
 ( ( CONT 5 < ) ( ( ( ACUM CONT + ) ACUM MEM ) ( ( CONT 1 + ) CONT MEM ) ) WHILE )
